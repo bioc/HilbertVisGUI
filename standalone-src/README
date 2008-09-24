@@ -1,0 +1,6 @@
+The content of this directory is not part of the R package.
+
+Rather, it allows to build HilbertCurveDisplay as a stand-alone 
+interface, to be used independent of R.
+
+See http://www.ebi.ac.uk/~anders/hilbert/ for more information.

@@ -1,0 +1,8 @@
+GTK_INC=`pkg-config gtkmm-2.4 --cflags`
+GTK_LIB=`pkg-config gtkmm-2.4 --libs`
+SO_NAME=HilbertCurveDisplay
+
+PKG_CFLAGS=$(GTK_INC) -DSO_NAME=$(SO_NAME)
+PKG_CPPFLAGS=$(PKG_CFLAGS)
+#LIBS=$(GTK_LIB)
+PKG_LIBS=$(GTK_LIB)

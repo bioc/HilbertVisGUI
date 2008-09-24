@@ -1,0 +1,5 @@
+2008-08-06: version 0.99.1
+- changes to allow for compilation under Windows
+
+2008-07-21: version 0.99.0
+Initial submission to Bioconductor

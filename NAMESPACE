@@ -1,0 +1,26 @@
+export( 
+   simpleLinPlot, 
+   hilbertDisplay, 
+   hilbertDisplayThreeChannel,
+   hilbertDefaultPalette, 
+   dotsapply,
+   hilbertCurve,
+   hilbertCurvePoint,
+   plotHilbertCurve,
+   shrinkVector,
+   plotLongVector,
+   makeWiggleVector,
+   hilbertImage,
+   makeRandomTestData )
+   
+import( grid )
+
+useDynLib( HilbertCurveDisplay,
+   init_prot_env,
+   R_display_hilbert, 
+   dotsapplyR, 
+   hilbertCurveR,
+   R_display_hilbert_3channel,
+   shrink_vector_int,
+   shrink_vector_double,
+   make_wiggle_vector )

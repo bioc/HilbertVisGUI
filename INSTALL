@@ -1,0 +1,51 @@
+====================================================
+== HilbertCurveDisplay: Installation Instructions ==
+====================================================
+
+The present package is meant to be used with the statistics programming
+language R. It is also possible to use HilbertCurveDisplay as a stand-alone 
+application, without R, but I have not yet made this option into a package. 
+If you need it, please contact me.
+
+--------------
+Prerequesites:
+--------------
+
+You need to have installed a reasonably recent version of R, at least
+R 2.6.0, and the 'gtkmm' library for GTK+ 2.4, the latter with header files.
+
+For R, see http://www.r-project.org/
+
+In order to see whether you have gtkmm installed, type at the command prompt
+  pkg-config --modversion gtkmm-2.4
+If you do not get any output, gtkmm-2.4 is missing or cannot be found by 
+pkg-config.
+
+In most Linux systems, you only need to use your distribution's package manager
+and install the gtkmm development package. See the following URL to learn how
+the package is called on the different distributions:
+   http://www.gtkmm.org/download.shtml
+   
+Note that at the above URL, there is also a Fink package for use with MacOS X.
+
+For Windows, you can find binaries of gtkmm on the Gnome FTP server. As of
+now, the URL is
+   http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/
+Note that you need the 'gtkmm-win32-devel' package only if you want to install 
+HilbertCurveDisplay from source. if you have a pre-compiled binary
+package, the 'gtkmm-win32-runtime' package is sufficient.
+
+
+Installation:
+-------------
+
+Once gtkmm is properly installed on your system, you can install
+HilbertCurveDisplay with R's install function:
+   R CMD INSTALL path/to/HilbertCurveDisplay
+   
+
+Note:
+-----
+I have not yet verified that the installation instructions for Mac and
+Windows really work as described, but will do so as soon as I get hold
+of a machine with these operating systems.

@@ -1,0 +1,4 @@
+- add accelerators to main window
+- add possibility to pass a list instead of '...'
+- add display of value pointed at with the mouse
+- use GenomeGraphs to make a nice linear plot function
