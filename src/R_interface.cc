@@ -207,15 +207,15 @@ for the shared object to be loaded by R.
 #define STRINGIFY( a ) #a
 
 extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll) 
-{
-   // Instatiate GTK
+{   
+   // Instatiate GTK (only if it ahs not yet been instantiated)
    the_kit = new Gtk::Main( argc, argv, false );
-   
+	   
    // Hook up into R's event loop
    #ifndef MSWINDOWS
 
-      if( getInputHandler( R_InputHandlers, ConnectionNumber(GDK_DISPLAY()) ) != 0 )
-	 Rf_error( "Internal error in adding input handler." );      
+      if( ! GDK_DISPLAY() )
+         Rf_error( "Cannot connect to X display." );
       addInputHandler( R_InputHandlers, ConnectionNumber(GDK_DISPLAY()), gtk_loop_iter, -1 );
 
    #else
@@ -493,12 +493,3 @@ extern "C" SEXP dotsapplyR( SEXP args ) {
 }
 
 
-extern "C" SEXP hilbertCurveR( SEXP t, SEXP lv )
-{
-   coord c = hilbert( INTEGER(t)[0], INTEGER(lv)[0] );
-   SEXP res;
-   res = Rf_allocVector( INTSXP, 2 );
-   INTEGER(res)[0] = c.x;
-   INTEGER(res)[1] = c.y;
-   return res;
-}

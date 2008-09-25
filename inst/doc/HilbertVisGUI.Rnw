@@ -1,0 +1,22 @@
+%\VignetteIndexEntry{See vignette in package HilbertVis}
+%\VignettePackage{HilbertVisGUI}
+
+\documentclass{article}
+
+\usepackage[a4paper]{geometry}
+
+\author{Simon Anders\\[1em]European Bioinformatics Institute,\\ Hinxton, Cambridge, UK\\[1em]
+\texttt{sanders@fs.tum.de}}
+
+\title{HilbertVisGUI}
+
+\begin{document}
+
+\maketitle
+
+{\em The package \texttt{HilbertVisGUI} is described in the vignette {\em Visualising very 
+long data vectors with the Hilbert curve}, which is supplied with the package \texttt{HilbertVis}.
+
+See there for further information.}
+
+\end{document}

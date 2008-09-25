@@ -1,7 +1,7 @@
 export PKG_CONFIG_PATH:=$(PKG_CONFIG_PATH);$(GTK_PATH)/lib/pkgconfig
 GTK_INC:=`pkg-config gtkmm-2.4 --cflags`
 GTK_LIB:=`pkg-config gtkmm-2.4 --libs`
-SO_NAME=HilbertCurveDisplay
+SO_NAME=HilbertVisGUI
 
 PKG_CFLAGS=$(GTK_INC) -DSO_NAME=$(SO_NAME) -DMSWINDOWS
 PKG_CPPFLAGS=$(PKG_CFLAGS)

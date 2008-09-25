@@ -1,6 +1,6 @@
-====================================================
-== HilbertCurveDisplay: Installation Instructions ==
-====================================================
+==============================================
+== HilbertVisGUI: Installation Instructions ==
+==============================================
 
 The present package is meant to be used with the statistics programming
 language R. It is also possible to use HilbertCurveDisplay as a stand-alone 
@@ -41,7 +41,7 @@ Installation:
 
 Once gtkmm is properly installed on your system, you can install
 HilbertCurveDisplay with R's install function:
-   R CMD INSTALL path/to/HilbertCurveDisplay
+   R CMD INSTALL path/to/HilbertVisGUI
    
 
 Note:
