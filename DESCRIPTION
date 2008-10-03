@@ -1,7 +1,7 @@
-Package: HilbertCurveDisplay
-Version: 0.99.4
-Date: 2008-09-15
-Title: HilbertCurveDisplay
+Package: HilbertVisGUI
+Version: 0.99.5
+Date: 2008-09-25
+Title: HilbertVisGUI
 Author: Simon Anders <anders@fs.tum.de>
 Maintainer: Simon Anders <anders@fs.tum.de>
 Depends: R (>= 2.6.0)
