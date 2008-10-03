@@ -14,8 +14,8 @@
 
 \maketitle
 
-{\em The package \texttt{HilbertVisGUI} is described in the vignette {\em Visualising very 
-long data vectors with the Hilbert curve}, which is supplied with the package \texttt{HilbertVis}.
+{\em The package \texttt{HilbertVisGUI} is described in the vignette {\em ``Visualising very 
+long data vectors with the Hilbert curve''}, which is supplied with the package \texttt{HilbertVis}.
 
 See there for further information.}
 

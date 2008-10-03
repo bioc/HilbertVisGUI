@@ -15,7 +15,7 @@ export(
    
 import( grid )
 
-useDynLib( HilbertCurveDisplay,
+useDynLib( HilbertVisGUI,
    init_prot_env,
    R_display_hilbert, 
    dotsapplyR, 
