@@ -3,7 +3,7 @@
 
 \documentclass{article}
 
-\usepackage[a4paper]{geometry}
+\usepackage{Sweave}
 
 \author{Simon Anders\\[1em]European Bioinformatics Institute,\\ Hinxton, Cambridge, UK\\[1em]
 \texttt{sanders@fs.tum.de}}
