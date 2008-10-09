@@ -33,17 +33,16 @@ failedToLoadDLL <- function( ) {
       "because you do not habe 'gtkmm' installed on your system,",
       "which is required by the package." )
       
-   if( .Platform$OS.type == "windows" )
-      cat( sep="\n",
+   switch( .Platform$pkgType,
+      win.binary  = cat( sep="\n",
 	 "",
 	 "To install gtkmm, simply download the automatic installer found",
 	 "at the following URL:",
 	 "http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/2.14/gtkmm-win32-runtime-2.14.1-2.exe",
 	 "Simply start the installer, accept all the default settings,",
 	 "then restart R and try again.",
-	 "" )
-   else if( .Platform$pkgType == "mac.binary" ) 
-      cat( sep="\n",
+	 "" ),
+      mac.binary = cat( sep="\n",
 	 "",
 	 "If you are using the MacPorts system (www.macports.org) or",
 	 "the Fink ports system, use one of these to install the",
@@ -51,17 +50,33 @@ failedToLoadDLL <- function( ) {
 	 "If you do not use a ports system, please consider installing",
 	 "MacPorts or wait for the GTK+ Project Team to finish their",
 	 "native Mac version: http://www.gtk.org/download-macos.html",
-	 "" )
-   else
-      cat( sep="\n",
-         "",
-	 "On most Linux distributions, 'gtkmm' can be easily installed with",
-	 "the distribution's package manager. Have a look at the instructions",
-	 "at http://www.gtkmm.org/download.shtml (under the heading 'Binary')",
-	 "to see what you need to install. After you have installed gtkmm,",
-	 "restart R and try again, please.",
-	 "" )
-	 
+	 "" ),
+      source = {
+	 switch( .Platform$OS.type,
+	    unix = cat( sep="\n",
+               "",
+	       "On most Linux distributions and several other Unix variants,",
+	       "'gtkmm' can be easily installed with the distribution's ",
+	       "package manager. Have a look at the instructions at",
+	       "http://www.gtkmm.org/download.shtml (under the heading 'Binary')",
+	       "to see what you need to install. After you have installed gtkmm,",
+	       "restart R and try again, please.",
+	       "" ),
+	    windows = cat( sep="\n",
+               "",
+	       "You are using source packages on Microsoft Windows, which is",
+	       "recommended for experienced users only. If you want to continue",
+	       "you can install a 'devel' package of 'gtkmm' with this automatic",
+	       "installer:",
+	       "http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/2.14/gtkmm-win32-devel-2.14.1-2.exe",
+	       "" ),
+	       # Note that a Windows source package user should not see the above
+	       # message as she cannot compile the package without having first 
+	       # installed the mentioned package. Nevertheless I leave this in in
+	       # case it is helpful for somebody
+            error( "Unknown value in .Platform$OS.type" ) ) },
+      error( "Unknown value in .Platform$pkgType" ) )
+	       	 
    cat( sep="\n",
       "If you continue to have problems, please let me ",
       "(sanders@fs.tum.de) know." )
