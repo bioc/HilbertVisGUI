@@ -61,8 +61,3 @@ hilbertDisplayThreeChannel <- function(
       portrait = FALSE )
    .Call( `R_display_hilbert_3channel`, dataRed, dataGreen, dataBlue, 
       naColor, fullLength, portrait )
- 
-Hilbert.ProtEnv <- NULL   
-   
-.onLoad <- function( libname, pkgname )
-   Hilbert.ProtEnv <<- .Call( "init_prot_env" )

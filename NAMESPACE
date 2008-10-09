@@ -6,8 +6,3 @@ export(
 
 import( HilbertVis )
    
-useDynLib( HilbertVisGUI,
-   init_prot_env,
-   R_display_hilbert, 
-   dotsapplyR, 
-   R_display_hilbert_3channel )
