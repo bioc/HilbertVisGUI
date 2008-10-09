@@ -7,14 +7,13 @@ language R. It is also possible to use HilbertCurveDisplay as a stand-alone
 application, without R, but I have not yet made this option into a package. 
 If you need it, please contact me.
 
---------------
-Prerequesites:
---------------
+
+----------------------
+Prerequisites (Linux):
+----------------------
 
 You need to have installed a reasonably recent version of R, at least
 R 2.6.0, and the 'gtkmm' library for GTK+ 2.4, the latter with header files.
-
-For R, see http://www.r-project.org/
 
 In order to see whether you have gtkmm installed, type at the command prompt
   pkg-config --modversion gtkmm-2.4
@@ -26,16 +25,39 @@ and install the gtkmm development package. See the following URL to learn how
 the package is called on the different distributions:
    http://www.gtkmm.org/download.shtml
    
-Note that at the above URL, there is also a Fink package for use with MacOS X.
 
-For Windows, you can find binaries of gtkmm on the Gnome FTP server. As of
-now, the URL is
+------------------------
+Prerequisites (Windows):
+------------------------
+
+If you use binary packages (as most users of R on Windows do) you simply
+have to install the gtkmm runtime for which you find an automatic install
+program on the Gnome FTP server. As of now, the URL is
    http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/
-Note that you need the 'gtkmm-win32-devel' package only if you want to install 
-HilbertCurveDisplay from source. if you have a pre-compiled binary
-package, the 'gtkmm-win32-runtime' package is sufficient.
+From there, download the newest 'gtkmm-win32-runtime' package and install
+it by simply starting it.
+
+If you want to compile the package from source you need to install instead
+the the 'gtkmm-win32-devel' package. (Hint: Make sure that the path into 
+which you install the 'devel' package does not contain any spaces as this
+confuses R's build mechanism in combination with pkg-config.)
+If R's build process cannot find the GTK libraries make sure that the
+environment variable GTK_PATH is set and points to the installation
+directory of gtkmm-devel.
 
 
+------------------------
+Prerequisites (MacOS X):
+------------------------
+
+For both the MacPorts system and the Fink system, there is a package called
+'gtkmm'. Install it and then you can either build the HilbertVisGUI package 
+from source or use a precompiled binary. For those users who don't use a 
+ports system and do not want to install MacPorts (www.macports.org), we may 
+provide an installer soon (akin to the one used by the RGtk2 package).
+
+
+-------------
 Installation:
 -------------
 
@@ -43,9 +65,5 @@ Once gtkmm is properly installed on your system, you can install
 HilbertCurveDisplay with R's install function:
    R CMD INSTALL path/to/HilbertVisGUI
    
-
-Note:
------
-I have not yet verified that the installation instructions for Mac and
-Windows really work as described, but will do so as soon as I get hold
-of a machine with these operating systems.
+(Or, if you use R with a GUI, use the "install package" function   
+from the menu.)
