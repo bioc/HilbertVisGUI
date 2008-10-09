@@ -9,7 +9,7 @@ Hilbert.ProtEnv <- NULL
 
 .onLoad <- function( libname, pkgname ) {
    
-   try( dll <<- library.dynam( pkgname, package=pkgname, lib.loc=libname ) )
+   dll <<- try( library.dynam( pkgname, package=pkgname, lib.loc=libname ) )
    if( class(dll) == "try-error" )
       failedToLoadDLL( )
       
