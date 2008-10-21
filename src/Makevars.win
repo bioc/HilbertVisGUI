@@ -1,4 +1,4 @@
-export PKG_CONFIG_PATH:=$(PKG_CONFIG_PATH);$(GTK_PATH)/lib/pkgconfig
+export PKG_CONFIG_PATH:=$(PKG_CONFIG_PATH);$(GTKMM_BASEPATH)/lib/pkgconfig
 GTK_INC:=`pkg-config gtkmm-2.4 --cflags`
 GTK_LIB:=`pkg-config gtkmm-2.4 --libs`
 SO_NAME=HilbertVisGUI
