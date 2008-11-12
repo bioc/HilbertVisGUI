@@ -4,8 +4,5 @@ SO_NAME=HilbertVisGUI
 
 PKG_CFLAGS=$(GTK_INC) -DSO_NAME=$(SO_NAME)
 PKG_CPPFLAGS=$(PKG_CFLAGS)
-#LIBS=$(GTK_LIB)
 PKG_LIBS=$(GTK_LIB)
 
-CC=/ebi/research/software/Linux_x86_64/opt/stow/gcc-4.2.2/bin/gcc
-CXX=/ebi/research/software/Linux_x86_64/opt/stow/gcc-4.2.2/bin/g++
