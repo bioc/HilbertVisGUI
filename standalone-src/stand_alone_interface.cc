@@ -7,6 +7,8 @@
 #include "display.h"
 #include "colorizers.h"
 #include "window.h"
+#include "simple_regex_pp.h"
+#include "data_loading.h"
 
 using namespace std;
 
@@ -33,6 +35,106 @@ class BwcDataVector : public StdDataVector {
    const string & get_name( ) const;
    virtual pair< double, double > get_range( void ) const;
 };   
+
+class MainWindowWithFileButtons : public MainWindow {
+  public:
+   MainWindowWithFileButtons( std::vector< DataColorizer * > * dataCols, 
+      bool portrait = true ) : MainWindow( dataCols, portrait, true ) {};
+  protected:
+   virtual void on_btnOpen_clicked( void );
+   virtual void on_btnClose_clicked( void );
+};
+
+
+void MainWindowWithFileButtons::on_btnOpen_clicked( void )
+{
+   Gtk::FileChooserDialog dialog("Load data file" );
+   dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+   dialog.add_button(Gtk::Stock::OPEN, Gtk::RESPONSE_OK);
+
+   Gtk::FileFilter filt1, filt2, filt3, filt4, filt5;
+
+   filt4.add_pattern("*.gff");
+   filt4.add_pattern("*.bed");
+   filt4.add_pattern("*.wig");
+   filt4.add_pattern("*.map");
+   filt4.set_name("All supported file types (GFF, BED/Wiggle, Maq map)");
+   dialog.add_filter( filt4 );
+
+   filt1.add_pattern("*.gff");
+   filt1.add_pattern("*.gft");
+   filt1.set_name("Genomic Feature Files (*.gff, *.gft)");
+   dialog.add_filter( filt1 );
+
+   filt2.add_pattern("*.bed");
+   filt2.add_pattern("*.wig");
+   filt2.set_name("BED and wiggle track files (*.bed, *.wig)");
+   dialog.add_filter( filt2 );
+
+   filt3.add_pattern("*.map");
+   filt3.set_name("Maq map files (*.map)");
+   dialog.add_filter( filt3 );
+
+   filt5.add_pattern("*");
+   filt5.set_name("All files");
+   dialog.add_filter( filt5 );
+
+   int result = dialog.run();   
+   if( result == Gtk::RESPONSE_CANCEL )
+      return;
+   
+   std::cout << dialog.get_filename() << std::endl;
+   
+   enum {gff, wig, maq} filetype;
+   
+   if( regex_match_pp( ".gff", dialog.get_filename(), REG_ICASE ) )
+      filetype = gff;
+   else if( regex_match_pp( ".bed", dialog.get_filename(), REG_ICASE ) 
+         || regex_match_pp( ".wig", dialog.get_filename(), REG_ICASE ) )
+      filetype = wig;
+   else if( regex_match_pp( ".map", dialog.get_filename(), REG_ICASE ) )
+      filetype = maq;
+   else {
+      Gtk::Dialog typedialog( "Specify file type" );      
+      Gtk::Label lbl1( Glib::ustring( "You have choosen to load the file\n" ) +
+         dialog.get_filename( ) +
+         Glib::ustring( ".\n\nThe type of this file cannot be determined from its\n"
+         "extension. Please indicate the file format:\n") ); 
+      Gtk::RadioButtonGroup rbtng;
+      Gtk::RadioButton rbtnGff( rbtng, "Genomic Feature Format (GFF)" );
+      Gtk::RadioButton rbtnWig( rbtng, "BED or wiggle track file" );
+      Gtk::RadioButton rbtnMaq( rbtng, "Maq map file" );
+      typedialog.get_vbox()->add( lbl1 );
+      typedialog.get_vbox()->add( rbtnGff );
+      typedialog.get_vbox()->add( rbtnWig );
+      typedialog.get_vbox()->add( rbtnMaq );
+      lbl1.show();      
+      rbtnGff.show( );
+      rbtnWig.show( );
+      rbtnMaq.show( );
+      
+      typedialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+      typedialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
+      if( typedialog.run( ) == Gtk::RESPONSE_CANCEL )
+         return;
+	 
+      if( rbtnGff.get_active( ) )
+         filetype = gff;
+      else if( rbtnWig.get_active( ) )
+         filetype = wig;
+      else if( rbtnMaq.get_active( ) )
+         filetype = maq;
+      else abort(); 	 
+   }
+   
+   get_toc( 
+      
+}
+
+void MainWindowWithFileButtons::on_btnClose_clicked( void )
+{
+   error_bell();
+}
 
 
 StdDataVector::StdDataVector( vector<double> * v_ )
@@ -272,7 +374,7 @@ int main( int argc, char *argv[] )
       filenames.push_back( argv[i] );
    vector< DataColorizer * > * dataCols = load_data( filenames, same_scale, pow2 );
    cout << "Preparing display...\n"; cout.flush();
-   MainWindow win( dataCols );   
+   MainWindowWithFileButtons win( dataCols, false );   
    Gtk::Main::run( win );   
 }      
 

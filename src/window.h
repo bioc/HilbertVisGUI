@@ -12,7 +12,8 @@
 class MainWindow : public Gtk::Window {
   
   public:
-   MainWindow( std::vector< DataColorizer * > * dataCols, bool portrait=true );
+   MainWindow( std::vector< DataColorizer * > * dataCols, bool portrait = true,
+      bool fileButtons = false );
 
   protected:
    // Signal handlers:
@@ -22,6 +23,8 @@ class MainWindow : public Gtk::Window {
    virtual void on_btnFiner_clicked( void );
    virtual void on_btnPrev_clicked( void );
    virtual void on_btnNext_clicked( void );
+   virtual void on_btnOpen_clicked( void );
+   virtual void on_btnClose_clicked( void );
    virtual void on_cboxtSeqnames_changed( void );
    virtual void on_adjDisplayedValueRange_changed( void );
    virtual void on_adjPointerPos_value_changed( void );
@@ -34,6 +37,7 @@ class MainWindow : public Gtk::Window {
    // Member widgets:
    HilbertCurveDisplay canvas;
    Gtk::Button btnZoomOut4x, btnZoomOut64x, btnCoarser, btnFiner, btnPrev, btnNext;
+   Gtk::Button btnOpen, btnClose;
    Gtk::HBox hbox1, hbox2, hbox3, hbox4, hbox5, hbox6, hbox7;
    Gtk::VBox vbox1;
    Gtk::Box * box0;

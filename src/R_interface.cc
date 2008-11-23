@@ -209,7 +209,7 @@ for the shared object to be loaded by R.
 extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll) 
 {   
    // Instatiate GTK (only if it ahs not yet been instantiated)
-   the_kit = new Gtk::Main( argc, argv, false );
+   the_kit = new Gtk::Main( argc, argv, true );
 	   
    // Hook up into R's event loop
    #ifndef MSWINDOWS

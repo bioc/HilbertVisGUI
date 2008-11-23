@@ -15,7 +15,8 @@ all: hilbert conv2bwc
 hilbert: stand_alone_interface.o  colorizers.o \
    display.o ruler.o window.o	
 	${CC} -o hilbert stand_alone_interface.o colorizers.o \
-	display.o ruler.o window.o ${LIBZ} ${GTKMM_LIBS}
+	display.o ruler.o window.o simple_regex_pp.o \
+	${LIBZ} ${GTKMM_LIBS}
 	
 conv2bwc: conv2bwc.o simple_regex_pp.o	
 	${CC} -o conv2bwc conv2bwc.o simple_regex_pp.o \

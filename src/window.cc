@@ -6,7 +6,8 @@
 #include "colorizers.h"
 #include "ruler.h"
 
-MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, bool portrait )
+MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, 
+      bool portrait, bool fileButtons )
  : dataCols( dataCols_ ),
    cur_dataCol_idx( 0 ),
    canvas( (*dataCols_)[0] ),
@@ -16,7 +17,9 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, bool portrai
    btnFiner( "Finer" ),
    btnPrev( "Previous" ),
    btnNext( "Next" ),
-   tbl1( 1, 6, true ),
+   btnOpen( "Open" ),
+   btnClose( "Close" ),
+   tbl1( fileButtons ? 2 : 1, 6, true ),
    frame1( "Bin under mouse cursor" ),
    frame2( "Full sequence" ),
    frame3( "Displayed part of sequence" ),
@@ -71,6 +74,10 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, bool portrai
    tbl1.attach( btnPrev, 0, 1, 0, 1 );
    tbl1.attach( cboxtSeqnames, 1, 5, 0, 1 );
    tbl1.attach( btnNext, 5, 6, 0, 1 );
+   if( fileButtons ) {
+      tbl1.attach( btnOpen, 0, 1, 1, 2 );
+      tbl1.attach( btnClose, 1, 2, 1, 2 );
+   }
    frame7.add( tbl1 );
    
    vbox1.set_spacing( 10 );
@@ -108,6 +115,10 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, bool portrai
       sigc::mem_fun( *this, &MainWindow::on_btnPrev_clicked) );
    btnNext.signal_clicked().connect( 
       sigc::mem_fun( *this, &MainWindow::on_btnNext_clicked) );
+   btnOpen.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnOpen_clicked) );
+   btnClose.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnClose_clicked) );
    cboxtSeqnames.signal_changed().connect( 
       sigc::mem_fun( *this, &MainWindow::on_cboxtSeqnames_changed) );
    canvas.get_adjDisplayedValueRange().signal_changed().connect(
@@ -179,6 +190,15 @@ void MainWindow::on_btnNext_clicked( void )
   else
      error_bell ();
 }
+
+void MainWindow::on_btnOpen_clicked( void )
+{
+}
+
+void MainWindow::on_btnClose_clicked( void )
+{
+}
+
 
 void MainWindow::on_cboxtSeqnames_changed( void )
 {
