@@ -7,9 +7,9 @@
 # framework put the pkg-config files. If the build runs on Linux,
 # these directories will simply be ignored.
 
-export PATH=$(PATH):\
+export PATH:=$(PATH):\
 /Library/Frameworks/GTK+.framework/Resources/bin
-export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH):\
+export PKG_CONFIG_PATH:=$(PKG_CONFIG_PATH):\
 /Library/Frameworks/GTK+.framework/Versions/Current/Resources/lib/pkgconfig:\
 /Library/Frameworks/GTK+.framework/Versions/2.14.X11/Resources/lib/pkgconfig
 
