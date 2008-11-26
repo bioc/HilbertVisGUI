@@ -21,7 +21,7 @@ if ! which pkg-config; then
 	| the following URL for more information:
 	| http://www.ebi.ac.uk/~anders/gtkr/insthelp.html
 EOT
-   return 1
+   exit 1
 fi
 
 echo -n "Checking for gtkmm-2.4... "
@@ -69,7 +69,7 @@ read dummy
    
 EOT
    # '
-   return 1
+   exit 1
 fi
 
-return 0
+exit 0
