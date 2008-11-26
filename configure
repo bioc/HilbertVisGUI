@@ -19,7 +19,7 @@ if ! which pkg-config; then
 
 	| (If you are building on Mac OS X or MS Windows, please look at
 	| the following URL for more information:
-	| http://www.ebi.ac.uk/~anders/gtkR/___TO_BE_FILLED_IN___ )
+	| http://www.ebi.ac.uk/~anders/gtkr/insthelp.html
 EOT
    return 1
 fi
@@ -65,7 +65,7 @@ read dummy
    | [This list is taken and adapted from http://www.gtkmm.org/download.shtml ]
    
    | MS WINDOWS and MAC users: Please visit the following page for 
-   | more information: http://www.ebi.ac.uk/~anders/gtkR/___TO_BE_FILLED_IN___
+	| http://www.ebi.ac.uk/~anders/gtkr/insthelp.html
    
 EOT
    # '
