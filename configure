@@ -1,0 +1,75 @@
+#!/bin/sh
+
+# This script does not actually configure anything. It merely checks
+# for the presence of pkg-config and gtkmm-2.4 and, failing to find
+# these, displays a message with explanation on how to install gtkmm.
+# This is meant to save the inexperienced user from getting an
+# incomprehensible error message when pkg-config in src/Makevars fails.
+
+echo -n "Checking for pkg-config... "
+if ! which pkg-config; then
+   echo "not found!"
+   cat <<-'EOT'
+
+	| Failed to find (or execute) the 'pkg-config' utility, which is
+	| needed to build  and link against GTK+. On all modern Linux
+	| distributions, 'pkg-config' should exist. Please try to install
+	| pkg-config (using your distribution's package manager) and then 
+	| try again.
+
+	| (If you are building on Mac OS X or MS Windows, please look at
+	| the following URL for more information:
+	| http://www.ebi.ac.uk/~anders/gtkR/___TO_BE_FILLED_IN___ )
+EOT
+   return 1
+fi
+
+echo -n "Checking for gtkmm-2.4... "
+if pkg-config gtkmm-2.4; then
+   echo "found: version" `pkg-config --modversion gtkmm-2.4`
+else
+   echo "not found!"
+   cat <<-'EOT'
+
+   | The 'pkg-config' utility could not find the library and header
+   | files for 'gtkmm-2.4'. 'gtkmm' and the GTK+ framework are required
+   | to build the present package.
+   
+   | Don't worry. For most modern Linux distribution, it is pretty easy
+   | to install these. Just use your distribution's package manage, search 
+   | for the gtkmm package and install it. Make sure that you install
+   | the developer version of the package. It is usually called 
+   | 'gtkmm-2.4-dev', 'gtkmm-2.4-devel', 'gtkmm-dev', 'gtkmm-devel', or
+   | similarily.
+   
+   | Please press <ENTER> to read on for additional information.
+EOT
+read dummy
+   cat <<-'EOT'     
+   | The following list tells you what you need to do for the most popular
+   | Linux distributions:
+   |
+   | * Ubuntu and Debian Linux:
+   |     In a terminal, type the following command:
+   |        apt-get install libgtkmm-2.4-dev
+   | * RedHat, Fedora, and CentOS Linux:
+   |     In a terminal, type the following command:
+   |        yum install gtkmm24-docs
+   | * SuSE Linux: 
+   |      Use yast to install gtkmm2-devel.
+   | * Mandrake Linux: 
+   |      Get libgtkmm2.4 from the contrib directory on Mandrake's 
+   |      FTP servers.
+   | * Gentoo Linux: 
+   |      Get dev-cpp/gtkmm.
+   | [This list is taken and adapted from http://www.gtkmm.org/download.shtml ]
+   
+   | MS WINDOWS and MAC users: Please visit the following page for 
+   | more information: http://www.ebi.ac.uk/~anders/gtkR/___TO_BE_FILLED_IN___
+   
+EOT
+   # '
+   return 1
+fi
+
+return 0
