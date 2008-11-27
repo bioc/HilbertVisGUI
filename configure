@@ -6,6 +6,15 @@
 # This is meant to save the inexperienced user from getting an
 # incomprehensible error message when pkg-config in src/Makevars fails.
 
+# These lines only have an effect on Macs. See the comment in src/Makevars
+# for fourther explanations
+PATH=$PATH:/Library/Frameworks/GTK+.framework/Resources/bin
+export PATH
+PKG_CONFIG_PATH=$PKG_CONFIG_PATH:\
+/Library/Frameworks/GTK+.framework/Versions/Current/Resources/lib/pkgconfig:\
+/Library/Frameworks/GTK+.framework/Versions/2.14.X11/Resources/lib/pkgconfig
+export PKG_CONFIG_PATH
+
 echo -n "Checking for pkg-config... "
 if ! which pkg-config; then
    echo "not found!"
