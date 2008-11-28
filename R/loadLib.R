@@ -81,9 +81,9 @@ failedToLoadDLL <- function( ) {
    }
 	       	 
    cat( sep="\n",
-      "| If you continue to have problems, please let me ",
-      "| (sanders@fs.tum.de) know.",
+      " | If you continue to have problems, please let me ",
+      " | (sanders@fs.tum.de) know.",
       "" )
       
-   error( "Cannot load DLL." ) 	 
+   stop( "Cannot load DLL. Please read the help text above." ) 	 
 }
