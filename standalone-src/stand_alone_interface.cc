@@ -82,6 +82,7 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
    int result = dialog.run();   
    if( result == Gtk::RESPONSE_CANCEL )
       return;
+   dialog.hide( );
    
    std::cout << dialog.get_filename() << std::endl;
    
@@ -124,15 +125,19 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
          filetype = wig;
       else if( rbtnMaq.get_active( ) )
          filetype = maq;
-      else abort(); 	 
+      else abort(); 
+      
+      typedialog.hide( );	 
    }
    
+   get_toplevel()->get_window()->set_cursor( Gdk::Cursor(Gdk::WATCH) );
    set<string> toc;
    switch( filetype ) {
       case gff:  toc = get_gff_toc( dialog.get_filename( ) ); break;
       case wig: ;
       case maq: ;
    };   
+   get_toplevel()->get_window()->set_cursor( );
    
    Gtk::Dialog seqdialog( "Choose sequences" );      
    Gtk::Label lblseq( Glib::ustring( "The following sequences are found in\n" ) +

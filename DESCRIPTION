@@ -1,12 +1,12 @@
 Package: HilbertVisGUI
-Version: 1.1.1
-Date: 2008-11-26
+Version: 1.1.2
+Date: 2008-12-01
 Title: HilbertVisGUI
 Author: Simon Anders <anders@fs.tum.de>
 Maintainer: Simon Anders <anders@fs.tum.de>
 Depends: R (>= 2.6.0), HilbertVis (>= 0.99.5)
 SystemRequirements: gtkmm-2.4
-Suggests: lattice, EBImage
+Suggests: lattice
 Description: An interactive tool to visualize long vectors of 
 	integer data by means of Hilbert curves
 License: GPL >=3
