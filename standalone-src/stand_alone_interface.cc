@@ -97,7 +97,7 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
    else {
       Gtk::Dialog typedialog( "Specify file type" );      
       Gtk::Label lbl1( Glib::ustring( "You have choosen to load the file\n" ) +
-         dialog.get_filename( ) +
+         Glib::filename_display_basename( dialog.get_filename( ) ) +
          Glib::ustring( ".\n\nThe type of this file cannot be determined from its\n"
          "extension. Please indicate the file format:\n") ); 
       Gtk::RadioButtonGroup rbtng;
@@ -127,7 +127,36 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
       else abort(); 	 
    }
    
-   get_toc( 
+   set<string> toc;
+   switch( filetype ) {
+      case gff:  toc = get_gff_toc( dialog.get_filename( ) ); break;
+      case wig: ;
+      case maq: ;
+   };   
+   
+   Gtk::Dialog seqdialog( "Choose sequences" );      
+   Gtk::Label lblseq( Glib::ustring( "The following sequences are found in\n" ) +
+       Glib::filename_display_basename( dialog.get_filename( ) ) +
+       Glib::ustring( ".\n\nChose the sequence you wish to display.\n") ); 
+   Gtk::ListViewText lvt( 1 );
+   Gtk::ScrolledWindow scrwnd;
+   scrwnd.set_size_request( 150, 400 );
+   lvt.set_column_title( 0, "Sequences:" );
+   for( set<string>::const_iterator i = toc.begin(); i != toc.end(); i++ )
+      lvt.append_text( *i );
+   seqdialog.get_vbox()->add( lblseq );
+   scrwnd.add ( lvt );
+   seqdialog.get_vbox()->add( scrwnd );
+   lblseq.show( );      
+   scrwnd.show( );
+   lvt.show( );      
+      
+   seqdialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+   seqdialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
+   if( seqdialog.run( ) == Gtk::RESPONSE_CANCEL )
+      return;
+
+   
       
 }
 
