@@ -208,14 +208,25 @@ for the shared object to be loaded by R.
 
 extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll) 
 {   
+   #ifndef MSWINDOWS
+   
+   if( ! GDK_DISPLAY() ) {   
+      Rprintf( " | Cannot connect to an X display. Most functionality of \n"
+         " | HilbertVisGUI will be unavailable. Make sure that the DISPLAY\n"
+	 " | environment variable is set properly.\n" );
+      Rf_warning( "Cannot connect to X display." );
+      return;
+   }   
+   
+   #endif
+
+
    // Instatiate GTK (only if it ahs not yet been instantiated)
    the_kit = new Gtk::Main( argc, argv, true );
 	   
    // Hook up into R's event loop
    #ifndef MSWINDOWS
 
-      if( ! GDK_DISPLAY() )
-         Rf_error( "Cannot connect to X display." );
       addInputHandler( R_InputHandlers, ConnectionNumber(GDK_DISPLAY()), gtk_loop_iter, -1 );
 
    #else
@@ -271,6 +282,9 @@ extern "C" SEXP R_display_hilbert( SEXP args)
 {
    if( ! Rf_isPairList( args ) )
       Rf_error( "R_display_hilbert: Must be called with .External." );
+   if( ! GDK_DISPLAY() ) 
+      Rf_error( "R_display_hilbert: X display unavailable." );
+      
       
    SEXP arg = CDR( args );
    SEXP plot_callback = CAR( arg ); arg = CDR( arg );

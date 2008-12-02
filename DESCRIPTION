@@ -1,10 +1,10 @@
 Package: HilbertVisGUI
-Version: 1.1.2
-Date: 2008-12-01
+Version: 1.1.3
+Date: 2008-12-02
 Title: HilbertVisGUI
 Author: Simon Anders <anders@fs.tum.de>
 Maintainer: Simon Anders <anders@fs.tum.de>
-Depends: R (>= 2.6.0), HilbertVis (>= 0.99.5)
+Depends: R (>= 2.6.0), HilbertVis (>= 1.1.0)
 SystemRequirements: gtkmm-2.4
 Suggests: lattice
 Description: An interactive tool to visualize long vectors of 

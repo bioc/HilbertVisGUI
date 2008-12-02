@@ -61,7 +61,7 @@ failedToLoadDLL <- function( ) {
                " | to load this package.",
                "" ), 
  
-         error( "Unknown value in .Platform$pkgType" ) ) 
+         stop( "Unknown value in .Platform$pkgType" ) ) 
    } else {
    
        # source packages used
