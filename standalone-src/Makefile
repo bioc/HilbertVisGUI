@@ -28,7 +28,7 @@ conv2bwc.o: conv2bwc.cc simple_regex_pp.h
 simple_regex_pp.o: simple_regex_pp.cc
 	${CC} -c $<
 
-data_loading.o: data_loading.cc
+data_loading.o: data_loading.cc step_vector.h
 	${CC} -c $<
 
 stand_alone_interface.o: stand_alone_interface.cc  \

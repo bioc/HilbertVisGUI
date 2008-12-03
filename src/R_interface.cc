@@ -282,9 +282,11 @@ extern "C" SEXP R_display_hilbert( SEXP args)
 {
    if( ! Rf_isPairList( args ) )
       Rf_error( "R_display_hilbert: Must be called with .External." );
-   if( ! GDK_DISPLAY() ) 
-      Rf_error( "R_display_hilbert: X display unavailable." );
       
+   #ifndef MSWINDOWS
+      if( ! GDK_DISPLAY() ) 
+	 Rf_error( "R_display_hilbert: X display unavailable." );
+   #endif 
       
    SEXP arg = CDR( args );
    SEXP plot_callback = CAR( arg ); arg = CDR( arg );

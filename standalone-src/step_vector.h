@@ -8,9 +8,9 @@ template< class T >
 class step_vector {
   protected:
    std::map< long int, T > m;
+  public: 
    long int min_index;
    long int max_index;
-  public: 
    typedef typename std::map< long int, T >::const_iterator const_iterator;
    step_vector( long int length, long int min_index_=0 );
    T operator[]( long int i ) const;

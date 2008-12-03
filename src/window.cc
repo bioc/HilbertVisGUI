@@ -133,6 +133,14 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    show_all_children( );
 }
 
+void MainWindow::addColorizer( DataColorizer * dcol )
+{
+   dataCols->push_back( dcol );
+   char buf[150];
+   snprintf( buf, 150, "[%d]  %50s", dataCols->size(), dcol->get_name().c_str() );
+   cboxtSeqnames.append_text( buf );
+}
+
 void MainWindow::on_btnZoomOut4x_clicked( void )
 {
    try{

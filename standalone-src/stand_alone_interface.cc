@@ -36,6 +36,24 @@ class BwcDataVector : public StdDataVector {
    virtual pair< double, double > get_range( void ) const;
 };   
 
+enum binning_style_t { bin_max, abs_bin_max, bin_avg };
+
+class StepDataVector : public DataVector {
+  protected:
+   step_vector< double > * v;
+   long full_length;
+   binning_style_t binning_style;
+   bool own_vector;
+  public:
+   StepDataVector( step_vector<double> * v_, 
+      binning_style_t binning_style_ = bin_max, bool own_vector_ = true  ); 
+   virtual ~StepDataVector( );
+   virtual double get_bin_value( long bin_start, long bin_size ) const;
+   virtual long get_length( void ) const;
+   virtual pair< double, double > get_range( void ) const;
+   void set_full_length( long full_length_, bool round_up_to_pow2 = false );
+};
+
 class MainWindowWithFileButtons : public MainWindow {
   public:
    MainWindowWithFileButtons( std::vector< DataColorizer * > * dataCols, 
@@ -44,6 +62,12 @@ class MainWindowWithFileButtons : public MainWindow {
    virtual void on_btnOpen_clicked( void );
    virtual void on_btnClose_clicked( void );
 };
+
+
+vector< Gdk::Color > * palette_GLOBAL;
+vector<double> * palette_steps_GLOBAL;
+Gdk::Color na_color_GLOBAL;
+
 
 
 void MainWindowWithFileButtons::on_btnOpen_clicked( void )
@@ -161,7 +185,20 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
    if( seqdialog.run( ) == Gtk::RESPONSE_CANCEL )
       return;
 
-   
+   step_vector<double> * sv;
+   string seqname =lvt.get_text( lvt.get_selected()[0] );
+   try{ 
+      sv = load_gff_data( dialog.get_filename( ), seqname );
+   } catch( ... ) {
+      Gtk::MessageDialog mdlg( string( "The file " ) + 
+         Glib::filename_display_basename( dialog.get_filename( ) ) +
+	 " could not be loaded.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+      mdlg.run();
+   }
+     
+   addColorizer( new SimpleDataColorizer( new StepDataVector( sv ), 
+      Glib::filename_display_basename( dialog.get_filename( ) ) + ": " + seqname, 
+      palette_GLOBAL, na_color_GLOBAL, palette_steps_GLOBAL) );   
       
 }
 
@@ -292,6 +329,65 @@ pair< double, double > BwcDataVector::get_range( void ) const
 }
 
 
+StepDataVector::StepDataVector( step_vector<double> * v_, 
+      binning_style_t binning_style_, bool own_vector_ )
+ : v(v_), binning_style( binning_style_ ), own_vector( own_vector_ )
+{ 
+   full_length = v->max_index;
+}   
+
+StepDataVector::~StepDataVector( )
+{
+   if( own_vector )
+      delete v;
+}
+
+
+double StepDataVector::get_bin_value( long bin_start, long bin_size ) const
+{
+   // This needs to be optimized
+   // and binning_style needs respect
+   if( bin_start + bin_size > v->max_index )
+      throw naValue();   
+   double res = -numeric_limits<double>::max();
+   for( long i = bin_start; i < bin_start + bin_size && i <= v->max_index; i++ )
+      if( (*v)[i] > res )
+         res = (*v)[i];
+   return res;
+}
+
+long StepDataVector::get_length( void ) const
+{
+   return full_length;
+}
+
+pair< double, double > StepDataVector::get_range( void ) const 
+{
+   // This needs to be optimized
+   double min = numeric_limits<double>::max();
+   double max = numeric_limits<double>::min();
+   for( long i = 0; i <= v->max_index; i++ ) {
+      if( (*v)[i] < min )
+         min = (*v)[i];
+      if( (*v)[i] > max )
+         max = (*v)[i];
+   }
+   return pair<double,double>( min, max );	
+}
+
+void StepDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
+{
+   full_length = full_length_;
+   
+   if( round_up_to_pow2 ) {
+      int i;
+      for( i = 0; i < 64; i++ )
+         if( !( (unsigned) full_length >> i ) )
+	    break;
+      full_length = 1UL << i;
+   }  
+}
+
 vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale, bool pow2 )
 {
    // Load the data:
@@ -345,6 +441,7 @@ vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale
       col.set_rgb_p( 1-(i/74.), 0, i/74. );
       palette->push_back( col );
    }
+   palette_GLOBAL = palette;
    
    // Construct palette steps:
    vector<double> * palette_steps = new vector<double>( palette->size() - 1 );
@@ -353,9 +450,11 @@ vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale
    printf( "Palette: pure white = %.3g  (minimum value)\n", min );
    printf( "         pure red   = %.3g\n", (*palette_steps)[24] );
    printf( "         pure blue  = %.3g  (maximum value)\n", max );
+   palette_steps_GLOBAL = palette_steps;
       
    // NA color:
    col.set_grey_p( .5 );
+   na_color_GLOBAL = col;
    
    // Construct the data colorizers:
    vector< DataColorizer * > * dataCols = new vector< DataColorizer * >;

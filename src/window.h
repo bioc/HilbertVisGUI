@@ -14,6 +14,8 @@ class MainWindow : public Gtk::Window {
   public:
    MainWindow( std::vector< DataColorizer * > * dataCols, bool portrait = true,
       bool fileButtons = false );
+      
+   void addColorizer( DataColorizer * dcol );
 
   protected:
    // Signal handlers:
