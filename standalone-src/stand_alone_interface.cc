@@ -12,6 +12,7 @@
 
 using namespace std;
 
+/*
 class StdDataVector : public DataVector {
   protected:
    vector< double > * v;
@@ -35,6 +36,7 @@ class BwcDataVector : public StdDataVector {
    const string & get_name( ) const;
    virtual pair< double, double > get_range( void ) const;
 };   
+*/
 
 enum binning_style_t { bin_max, bin_min, abs_bin_max, bin_avg };
 
@@ -199,7 +201,7 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
       return;
 
    step_vector<double> * sv;
-   string seqname =lvt.get_text( lvt.get_selected()[0] );
+   string seqname = lvt.get_text( lvt.get_selected()[0] );
    try{ 
       sv = load_gff_data( dialog.get_filename( ), seqname );
    } catch( ... ) {
@@ -250,7 +252,7 @@ void MainWindowWithFileButtons::brew_palettes( double max_value, double gamma )
 
 }
 
-
+/*
 StdDataVector::StdDataVector( vector<double> * v_ )
  : v(v_)
 { 
@@ -370,7 +372,7 @@ pair< double, double > BwcDataVector::get_range( void ) const
 {
    return pair<double,double>( min, max );
 }
-
+*/
 
 StepDataVector::StepDataVector( step_vector<double> * v_, 
       binning_style_t binning_style_, bool own_vector_ )
@@ -384,17 +386,6 @@ StepDataVector::~StepDataVector( )
    if( own_vector )
       delete v;
 }
-
-inline double max( double a, double b )
-{
-   return a > b ? a : b;
-}
-
-inline double min( double a, double b )
-{
-   return a < b ? a : b;
-}
-
 
 double StepDataVector::get_bin_value( long bin_start, long bin_size ) const
 {
@@ -453,6 +444,7 @@ void StepDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
    }  
 }
 
+/*
 vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale, bool pow2 )
 {
    // Load the data:
@@ -493,32 +485,6 @@ vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale
       min = 0;
    }
 	 
-   /*
-   // Construct palette:
-   vector< Gdk::Color > * palette = new vector< Gdk::Color >;
-   Gdk::Color col;
-   // first quarter: white to red
-   for( int i = 0; i < 25; i++ ) {
-      col.set_rgb_p( 1, 1-(i/24.), 1-(i/24.) );
-      palette->push_back( col );
-   }
-   // remaining quarters: red to blue
-   for( int i = 0; i < 75; i++ ) {
-      col.set_rgb_p( 1-(i/74.), 0, i/74. );
-      palette->push_back( col );
-   }
-   
-   // Construct palette steps:
-   vector<double> * palette_steps = new vector<double>( palette->size() - 1 );
-   for( int i = 0; i < palette_steps->size(); i++ )
-      (*palette_steps)[i] = min + (max-min)/palette->size() * (i+1);
-   printf( "Palette: pure white = %.3g  (minimum value)\n", min );
-   printf( "         pure red   = %.3g\n", (*palette_steps)[24] );
-   printf( "         pure blue  = %.3g  (maximum value)\n", max );
-      
-   // NA color:
-   col.set_grey_p( .5 );
-   */
    
    // Construct the data colorizers:
    vector< DataColorizer * > * dataCols = new vector< DataColorizer * >;
@@ -577,3 +543,18 @@ int main( int argc, char *argv[] )
    Gtk::Main::run( win );   
 }      
 
+*/
+
+int main( int argc, char *argv[] )
+{
+   cout << "Hilbert curve display of wiggle data.\n";
+   cout << "(c) Simon Anders, European Bioinformatics Institute (EMBL-EBI)\n";
+   cout << "sanders@fs.tum.de, version 0.99.3, date 2008-08-20\n";      
+   cout << "Released under GNU General Public License version 3\n\n";      
+
+   Gtk::Main kit(argc, argv);
+   std::vector< DataColorizer * > dataCols;
+   dataCols.push_back( new EmptyColorizer() );
+   MainWindowWithFileButtons win( &dataCols, false );   
+   Gtk::Main::run( win );   
+}      

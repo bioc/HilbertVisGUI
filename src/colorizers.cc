@@ -148,3 +148,21 @@ Glib::ustring ThreeChannelColorizer::get_name( void ) const
 {
    return name;
 }
+
+Glib::ustring EmptyColorizer::get_name( ) const
+{
+   return "[no data loaded]";
+}
+
+Gdk::Color EmptyColorizer::get_bin_color( long bin_start, long bin_size ) const
+{
+   Gdk::Color col;
+   col.set_grey_p( .5 );
+   return col;
+}
+
+long EmptyColorizer::get_length( void ) const
+{
+   return 1L << 18;
+}
+

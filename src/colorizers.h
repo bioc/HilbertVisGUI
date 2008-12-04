@@ -53,6 +53,12 @@ class ThreeChannelColorizer : public DataColorizer {
    std::vector<double> * palette_steps;
 };
 
+class EmptyColorizer : public DataColorizer {
+  public:
+   virtual Glib::ustring get_name( ) const;
+   virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const;
+   virtual long get_length( void ) const;
+};
 
 
 #endif //HILBERT_COLORIZERS_H
