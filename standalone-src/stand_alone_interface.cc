@@ -36,7 +36,7 @@ class BwcDataVector : public StdDataVector {
    virtual pair< double, double > get_range( void ) const;
 };   
 
-enum binning_style_t { bin_max, abs_bin_max, bin_avg };
+enum binning_style_t { bin_max, bin_min, abs_bin_max, bin_avg };
 
 class StepDataVector : public DataVector {
   protected:
@@ -57,17 +57,30 @@ class StepDataVector : public DataVector {
 class MainWindowWithFileButtons : public MainWindow {
   public:
    MainWindowWithFileButtons( std::vector< DataColorizer * > * dataCols, 
-      bool portrait = true ) : MainWindow( dataCols, portrait, true ) {};
+      bool portrait = true );
   protected:
    virtual void on_btnOpen_clicked( void );
    virtual void on_btnClose_clicked( void );
+   static void brew_palettes( double max_value, double gamma = 1.0 );
+   
+   // Global palette information
+   static const int shared_palette_size;
+   static vector< Gdk::Color > shared_palette;
+   static vector< Gdk::Color > shared_palette_neg;
+   static vector<double> shared_palette_steps;
+   static Gdk::Color shared_na_color;
+   
+   // only for now:
+   friend vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale, bool pow2 );
+   
 };
 
-
-vector< Gdk::Color > * palette_GLOBAL;
-vector<double> * palette_steps_GLOBAL;
-Gdk::Color na_color_GLOBAL;
-
+MainWindowWithFileButtons::MainWindowWithFileButtons( 
+     std::vector< DataColorizer * > * dataCols, bool portrait) 
+  : MainWindow( dataCols, portrait, true )
+{
+   brew_palettes( 10 );
+}  
 
 
 void MainWindowWithFileButtons::on_btnOpen_clicked( void )
@@ -104,7 +117,7 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
    dialog.add_filter( filt5 );
 
    int result = dialog.run();   
-   if( result == Gtk::RESPONSE_CANCEL )
+   if( result != Gtk::RESPONSE_OK )
       return;
    dialog.hide( );
    
@@ -140,7 +153,7 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
       
       typedialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
       typedialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
-      if( typedialog.run( ) == Gtk::RESPONSE_CANCEL )
+      if( typedialog.run( ) != Gtk::RESPONSE_OK )
          return;
 	 
       if( rbtnGff.get_active( ) )
@@ -182,7 +195,7 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
       
    seqdialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
    seqdialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
-   if( seqdialog.run( ) == Gtk::RESPONSE_CANCEL )
+   if( seqdialog.run( ) != Gtk::RESPONSE_OK )
       return;
 
    step_vector<double> * sv;
@@ -198,13 +211,43 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
      
    addColorizer( new SimpleDataColorizer( new StepDataVector( sv ), 
       Glib::filename_display_basename( dialog.get_filename( ) ) + ": " + seqname, 
-      palette_GLOBAL, na_color_GLOBAL, palette_steps_GLOBAL) );   
+      &shared_palette, shared_na_color, &shared_palette_steps ) );   
       
 }
 
 void MainWindowWithFileButtons::on_btnClose_clicked( void )
 {
    error_bell();
+}
+
+const int MainWindowWithFileButtons::shared_palette_size = 256;
+vector< Gdk::Color > MainWindowWithFileButtons::shared_palette( shared_palette_size );
+vector< Gdk::Color > MainWindowWithFileButtons::shared_palette_neg( shared_palette_size );
+vector<double> MainWindowWithFileButtons::shared_palette_steps( shared_palette_size-1 );
+Gdk::Color MainWindowWithFileButtons::shared_na_color;
+
+void MainWindowWithFileButtons::brew_palettes( double max_value, double gamma )
+{
+   cout << "Brewing palette." << endl;
+   
+   // Construct palette:
+   Gdk::Color col;
+   for( int i = 0; i < shared_palette_size; i++ ) {
+      double x = exp( gamma * log( i / (double) shared_palette_size ) );
+      // positive: white to red
+      shared_palette[i].set_rgb_p( 1., 1.-x, 1.-x );
+      // positive: white to blue
+      shared_palette_neg[i].set_rgb_p( 1.-x, 1.-x, 1. );
+   }
+   
+   // Construct palette steps:
+   const int min_value = 0;
+   for( int i = 0; i < shared_palette_steps.size(); i++ )
+      shared_palette_steps[i] = min_value + (max_value-min_value)/shared_palette.size() * (i+1);
+
+   // NA color:
+   shared_na_color.set_grey_p( .5 );
+
 }
 
 
@@ -342,19 +385,41 @@ StepDataVector::~StepDataVector( )
       delete v;
 }
 
+inline double max( double a, double b )
+{
+   return a > b ? a : b;
+}
+
+inline double min( double a, double b )
+{
+   return a < b ? a : b;
+}
+
 
 double StepDataVector::get_bin_value( long bin_start, long bin_size ) const
 {
-   // This needs to be optimized
    // and binning_style needs respect
    if( bin_start + bin_size > v->max_index )
       throw naValue();   
-   double res = -numeric_limits<double>::max();
-   for( long i = bin_start; i < bin_start + bin_size && i <= v->max_index; i++ )
-      if( (*v)[i] > res )
-         res = (*v)[i];
-   return res;
+      
+   switch( binning_style ) {
+      case bin_max:
+         return v->get_max( bin_start, bin_start+bin_size-1 );
+      case bin_min:
+         return v->get_min( bin_start, bin_start+bin_size-1 );
+      case abs_bin_max: {
+         pair<double,double> mm = v->get_minmax( bin_start, bin_start+bin_size-1 );
+	 return (-mm.first) > mm.second ? mm.first : mm.second;
+      }
+      case bin_avg: {
+         cerr << "average binning not yet implemented\n";
+	 abort( );
+      }
+      default:
+         abort( );
+   }
 }
+
 
 long StepDataVector::get_length( void ) const
 {
@@ -428,6 +493,7 @@ vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale
       min = 0;
    }
 	 
+   /*
    // Construct palette:
    vector< Gdk::Color > * palette = new vector< Gdk::Color >;
    Gdk::Color col;
@@ -441,7 +507,6 @@ vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale
       col.set_rgb_p( 1-(i/74.), 0, i/74. );
       palette->push_back( col );
    }
-   palette_GLOBAL = palette;
    
    // Construct palette steps:
    vector<double> * palette_steps = new vector<double>( palette->size() - 1 );
@@ -450,18 +515,19 @@ vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale
    printf( "Palette: pure white = %.3g  (minimum value)\n", min );
    printf( "         pure red   = %.3g\n", (*palette_steps)[24] );
    printf( "         pure blue  = %.3g  (maximum value)\n", max );
-   palette_steps_GLOBAL = palette_steps;
       
    // NA color:
    col.set_grey_p( .5 );
-   na_color_GLOBAL = col;
+   */
    
    // Construct the data colorizers:
    vector< DataColorizer * > * dataCols = new vector< DataColorizer * >;
    for( vector<BwcDataVector*>::iterator bdv = bdv_vec.begin();
          bdv != bdv_vec.end(); bdv++ )
       dataCols->push_back( new SimpleDataColorizer( 
-         *bdv, (*bdv)->get_name(), palette, col, palette_steps ) );
+         *bdv, (*bdv)->get_name(), &MainWindowWithFileButtons::shared_palette, 
+	 MainWindowWithFileButtons::shared_na_color, 
+	 &MainWindowWithFileButtons::shared_palette_steps ) );
    return dataCols;   
 }
 
