@@ -34,7 +34,6 @@ class MainWindow : public Gtk::Window {
 
    // dataColorizers:
    std::vector<DataColorizer * > * dataCols;
-   unsigned cur_dataCol_idx;
 
    // Member widgets:
    HilbertCurveDisplay canvas;

@@ -4,6 +4,7 @@
 #include <map>
 #include <stdexcept>
 #include <limits>
+#include <iostream>  //for now only
 
 template< class T >
 class step_vector {
@@ -118,57 +119,39 @@ typename step_vector<T>::const_iterator step_vector<T>::end( )
 template< class T >
 T step_vector<T>::get_max( long int from, long int to )
 {
-   const_iterator i = get_values( from );
    double mx = -std::numeric_limits<double>::max() ;
-   while( true) {
+   for( const_iterator i = get_values( from ); 
+         i != end() && i->first <= to; i++ ) {
       if( i->second > mx )
          mx = i->second;
-     
-      if( i->first > to )
-         break;
-      i++;
-      if( i == end() )
-         break;
-   }
+   };
    return mx;
 }
 
 template< class T >
 T step_vector<T>::get_min( long int from, long int to )
 {
-   const_iterator i = get_values( from );
    double mn = std::numeric_limits<double>::max() ;
-   while( true) {
+   for( const_iterator i = get_values( from ); 
+         i != end() && i->first <= to; i++ ) {
       if( i->second < mn )
          mn = i->second;
-     
-      if( i->first > to )
-         break;
-      i++;
-      if( i == end() )
-         break;
-   }
+   };
    return mn;
 }
 
 template< class T >
 std::pair< T, T > step_vector<T>::get_minmax( long int from, long int to )
 {
-   const_iterator i = get_values( from );
    double mn =  std::numeric_limits<double>::max() ;
    double mx = -std::numeric_limits<double>::max() ;
-   while( true) {
+   for( const_iterator i = get_values( from ); 
+         i != end() && i->first <= to; i++ ) {
       if( i->second < mn )
          mn = i->second;
       if( i->second > mx )
          mx = i->second;
-     
-      if( i->first > to )
-         break;
-      i++;
-      if( i == end() )
-         break;
-   }
+   };
    return std::pair<T,T>( mn, mx );
 }
 

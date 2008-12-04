@@ -110,11 +110,11 @@ step_vector<double> * load_gff_data( const string & filename, const string & seq
 
       try{	
          long int begin  = from_string< long int >( line.substr( pos[3].first, pos[3].second ) );
-	 long int length = from_string< long int >( line.substr( pos[4].first, pos[4].second ) );
+	 long int end    = from_string< long int >( line.substr( pos[4].first, pos[4].second ) );
 	 double   score  = from_string< double   >( line.substr( pos[5].first, pos[5].second ) );
-	 sv->add_value( begin, length, score );
-	 if( begin + length > maxidx )
-	    maxidx = begin + length;
+	 sv->add_value( begin, end, score );
+	 if( end > maxidx )
+	    maxidx = end;
       } catch( conversion_failed_exception e ) {
          cerr << "Could not parse the following line: " << line << endl;
       }
@@ -123,5 +123,9 @@ step_vector<double> * load_gff_data( const string & filename, const string & seq
 
    infile.close();
    sv->max_index = maxidx;
+   
+   //for( step_vector<double>::const_iterator i = sv->begin(); i != sv->end(); i++ )
+   //   cout << i->first << " " << i->second << endl;
+   
    return sv;
 }

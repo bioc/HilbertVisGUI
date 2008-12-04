@@ -12,32 +12,6 @@
 
 using namespace std;
 
-/*
-class StdDataVector : public DataVector {
-  protected:
-   vector< double > * v;
-   long full_length;
-  public:
-   StdDataVector( vector<double> * v_ ); 
-   virtual double get_bin_value( long bin_start, long bin_size ) const;
-   virtual long get_length( void ) const;
-   virtual pair< double, double > get_range( void ) const;
-   void set_full_length( long full_length_, bool round_up_to_pow2 = false );
-};
-
-class BwcDataVector : public StdDataVector {
-  protected:
-   string name;
-   BwcDataVector( vector<double> * v_, string name_, double min_, double max_ );
-   double min, max;
-  public:
-   virtual ~BwcDataVector( );
-   static BwcDataVector * new_BwcDataVector_from_file( const string bwc_file_name );
-   const string & get_name( ) const;
-   virtual pair< double, double > get_range( void ) const;
-};   
-*/
-
 enum binning_style_t { bin_max, bin_min, abs_bin_max, bin_avg };
 
 class StepDataVector : public DataVector {
@@ -56,36 +30,47 @@ class StepDataVector : public DataVector {
    void set_full_length( long full_length_, bool round_up_to_pow2 = false );
 };
 
-class MainWindowWithFileButtons : public MainWindow {
+class MainWindowForStandalone : public MainWindow {
   public:
-   MainWindowWithFileButtons( std::vector< DataColorizer * > * dataCols, 
+   MainWindowForStandalone( std::vector< DataColorizer * > * dataCols, 
       bool portrait = true );
   protected:
    virtual void on_btnOpen_clicked( void );
    virtual void on_btnClose_clicked( void );
-   static void brew_palettes( double max_value, double gamma = 1.0 );
+   void brew_palettes( double max_value, double gamma = 1.0 );
    
    // Global palette information
-   static const int shared_palette_size;
-   static vector< Gdk::Color > shared_palette;
-   static vector< Gdk::Color > shared_palette_neg;
-   static vector<double> shared_palette_steps;
-   static Gdk::Color shared_na_color;
-   
-   // only for now:
-   friend vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale, bool pow2 );
-   
+   const int shared_palette_size;
+   vector< Gdk::Color > shared_palette;
+   vector< Gdk::Color > shared_palette_neg;
+   vector<double> shared_palette_steps;
+   Gdk::Color shared_na_color;
 };
 
-MainWindowWithFileButtons::MainWindowWithFileButtons( 
+class BidirColorizer : public SimpleDataColorizer {
+  public:
+   BidirColorizer( DataVector * data_, Glib::ustring name_, 
+      std::vector< Gdk::Color > * pos_palette_, 
+      std::vector< Gdk::Color > * neg_palette_, Gdk::Color na_color_, 
+      std::vector<double> * palette_steps_ );
+   virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const;
+  protected:
+   std::vector< Gdk::Color > * neg_palette;
+};
+
+MainWindowForStandalone::MainWindowForStandalone( 
      std::vector< DataColorizer * > * dataCols, bool portrait) 
-  : MainWindow( dataCols, portrait, true )
+  : MainWindow( dataCols, portrait, true ),
+    shared_palette_size( 256 ),
+    shared_palette( shared_palette_size ),
+    shared_palette_neg( shared_palette_size ),
+    shared_palette_steps( shared_palette_size-1 )
 {
    brew_palettes( 10 );
 }  
 
 
-void MainWindowWithFileButtons::on_btnOpen_clicked( void )
+void MainWindowForStandalone::on_btnOpen_clicked( void )
 {
    Gtk::FileChooserDialog dialog("Load data file" );
    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
@@ -211,27 +196,20 @@ void MainWindowWithFileButtons::on_btnOpen_clicked( void )
       mdlg.run();
    }
      
-   addColorizer( new SimpleDataColorizer( new StepDataVector( sv ), 
+   addColorizer( new BidirColorizer( new StepDataVector( sv, abs_bin_max ), 
       Glib::filename_display_basename( dialog.get_filename( ) ) + ": " + seqname, 
-      &shared_palette, shared_na_color, &shared_palette_steps ) );   
+      &shared_palette, &shared_palette_neg, shared_na_color, &shared_palette_steps ) );   
+   cboxtSeqnames.set_active( dataCols->size()-1 );
       
 }
 
-void MainWindowWithFileButtons::on_btnClose_clicked( void )
+void MainWindowForStandalone::on_btnClose_clicked( void )
 {
    error_bell();
 }
 
-const int MainWindowWithFileButtons::shared_palette_size = 256;
-vector< Gdk::Color > MainWindowWithFileButtons::shared_palette( shared_palette_size );
-vector< Gdk::Color > MainWindowWithFileButtons::shared_palette_neg( shared_palette_size );
-vector<double> MainWindowWithFileButtons::shared_palette_steps( shared_palette_size-1 );
-Gdk::Color MainWindowWithFileButtons::shared_na_color;
-
-void MainWindowWithFileButtons::brew_palettes( double max_value, double gamma )
+void MainWindowForStandalone::brew_palettes( double max_value, double gamma )
 {
-   cout << "Brewing palette." << endl;
-   
    // Construct palette:
    Gdk::Color col;
    for( int i = 0; i < shared_palette_size; i++ ) {
@@ -251,128 +229,6 @@ void MainWindowWithFileButtons::brew_palettes( double max_value, double gamma )
    shared_na_color.set_grey_p( .5 );
 
 }
-
-/*
-StdDataVector::StdDataVector( vector<double> * v_ )
- : v(v_)
-{ 
-   full_length = v->size();
-}   
-
-double StdDataVector::get_bin_value( long bin_start, long bin_size ) const
-{
-   if( bin_start + bin_size > v->size() )
-      throw naValue();   
-   double res = -numeric_limits<double>::max();
-   for( long i = bin_start; i < bin_start + bin_size && i < v->size(); i++ )
-      if( (*v)[i] > res )
-         res = (*v)[i];
-   return res;
-}
-
-long StdDataVector::get_length( void ) const
-{
-   return full_length;
-}
-
-pair< double, double > StdDataVector::get_range( void ) const 
-{
-   double min = numeric_limits<double>::max();
-   double max = numeric_limits<double>::min();
-   for( long i = 0; i < v->size(); i++ ) {
-      if( (*v)[i] < min )
-         min = (*v)[i];
-      if( (*v)[i] > max )
-         max = (*v)[i];
-   }
-   return pair<double,double>( min, max );	
-}
-
-void StdDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
-{
-   full_length = full_length_;
-   
-   if( round_up_to_pow2 ) {
-      int i;
-      for( i = 0; i < 64; i++ )
-         if( !( (unsigned) full_length >> i ) )
-	    break;
-      full_length = 1UL << i;
-   }  
-}
-
-BwcDataVector::BwcDataVector( vector<double> * v_, string name_, double min_, 
-      double max_ )
- : name( name_ ), min( min_ ), max( max_ ),
-   StdDataVector( v_ )
-{
-}
-
-BwcDataVector::~BwcDataVector(  )
-{
-   delete v;
-}
-
-BwcDataVector * BwcDataVector::new_BwcDataVector_from_file( const string bwc_file_name )
-{   
-   char buf[ 200 ] = "invalid";
-   gzFile bwc_file = gzopen( bwc_file_name.c_str(), "rb" );
-   if( ! bwc_file ) {
-      cerr << "Failed to open file " << bwc_file_name << endl;
-      exit( 1);
-   }     
-   cout << "Reading file " << bwc_file_name << "... ";
-   cout.flush();
-   gzgets( bwc_file, buf, 200 );
-   if( strncmp( buf, "BWC1\n", 200 ) != 0 ) {
-      cerr << "File " << bwc_file_name << " is not a valid bwc file." << endl;
-      exit( 1);
-   }     
-   guint32 chrlen;
-   gzread( bwc_file, &chrlen, sizeof( guint32 ) );
-   // read name and remove trailing \n:
-   gzgets( bwc_file, buf, 200 ); 
-   buf[ strlen(buf)-1 ] = '\0';
-   
-   vector< double > * v = new vector< double >( chrlen );
-   double min = numeric_limits<double>::max();
-   double max = numeric_limits<double>::min();
-
-   guint32 pos = 0;
-   while( ! gzeof( bwc_file ) ) {
-      gdouble val;
-      guint32 rep;
-      gzread( bwc_file, &val, sizeof( gdouble ) );
-      gzread( bwc_file, &rep, sizeof( guint32 ) );
-      guint32 to = pos + rep;
-      if( to > v->size() ) {
-         cerr << "File " << bwc_file_name << " contains erroneous size or position data.\n";
-	 exit( 1);
-      }
-      for( ; pos < to; pos++ )
-         (*v)[pos] = val;
-      if( val < min )
-         min = val;
-      if( val > max )
-         max = val;
-   }
-   gzclose( bwc_file );
-   cout << "Done.\n";
-   cout.flush();
-   
-   return new BwcDataVector( v, string( buf ), min, max );
-}
-  
-const string & BwcDataVector::get_name( ) const
-{
-   return name;
-}
-
-pair< double, double > BwcDataVector::get_range( void ) const 
-{
-   return pair<double,double>( min, max );
-}
-*/
 
 StepDataVector::StepDataVector( step_vector<double> * v_, 
       binning_style_t binning_style_, bool own_vector_ )
@@ -444,106 +300,38 @@ void StepDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
    }  
 }
 
-/*
-vector< DataColorizer * > * load_data( vector<string> filenames, bool same_scale, bool pow2 )
+
+BidirColorizer::BidirColorizer( DataVector * data_, 
+      Glib::ustring name_, 
+      std::vector< Gdk::Color > * pos_palette_, 
+      std::vector< Gdk::Color > * neg_palette_, Gdk::Color na_color_, 
+      std::vector<double> * palette_steps_ )
+ : SimpleDataColorizer( data_, name_, pos_palette_, na_color_, 
+      palette_steps_ ),
+   neg_palette( neg_palette_ )   
 {
-   // Load the data:
-   vector< BwcDataVector * > bdv_vec;
-   for( vector<string>::iterator filename = filenames.begin(); 
-         filename != filenames.end(); filename++ )
-      bdv_vec.push_back( BwcDataVector::new_BwcDataVector_from_file( *filename ) );
-      
-   if( same_scale ) {
-      long max_length = 0;
-      for( vector<BwcDataVector*>::iterator bdv = bdv_vec.begin();
-            bdv != bdv_vec.end(); bdv++ )
-	 if( (*bdv)->get_length() > max_length)
-	    max_length = (*bdv)->get_length();
-      for( vector<BwcDataVector*>::iterator bdv = bdv_vec.begin();
-            bdv != bdv_vec.end(); bdv++ )
-	 (*bdv)->set_full_length( max_length, pow2 );
-      cout << max_length << endl;
-   } else if( pow2 ) 
-      for( vector<BwcDataVector*>::iterator bdv = bdv_vec.begin();
-            bdv != bdv_vec.end(); bdv++ )
-	 (*bdv)->set_full_length( (*bdv)->get_length(), true );
-      
-   // Get range:
-   double min = numeric_limits<double>::max();
-   double max = numeric_limits<double>::min();
-   for( vector<BwcDataVector*>::iterator bdv = bdv_vec.begin();
-         bdv != bdv_vec.end(); bdv++ ) {
-      pair<double,double> r = (*bdv)->get_range();
-      if( r.first < min )
-         min = r.first;
-      if( r.second > max )
-         max = r.second;
-   }
-   if( min < 0 ) {
-      cerr << "Warning: Negative data values found. The currently implemented binning "
-         "function will display these incorrectly.\n";
-      min = 0;
-   }
-	 
+}
    
-   // Construct the data colorizers:
-   vector< DataColorizer * > * dataCols = new vector< DataColorizer * >;
-   for( vector<BwcDataVector*>::iterator bdv = bdv_vec.begin();
-         bdv != bdv_vec.end(); bdv++ )
-      dataCols->push_back( new SimpleDataColorizer( 
-         *bdv, (*bdv)->get_name(), &MainWindowWithFileButtons::shared_palette, 
-	 MainWindowWithFileButtons::shared_na_color, 
-	 &MainWindowWithFileButtons::shared_palette_steps ) );
-   return dataCols;   
+Gdk::Color BidirColorizer::get_bin_color( long bin_start, long bin_size ) const
+{
+   double m;
+   try {
+      m = data->get_bin_value( bin_start, bin_size );
+   } catch( naValue e ) {
+      return na_color;
+   }
+   
+   unsigned i;
+   for( i = 0; i < palette_steps->size(); i++ )
+      if( (*palette_steps)[i] >= abs(m) )
+         break;
+
+   assert( (unsigned) i < palette->size() );
+      
+   return m >= 0 ? (*palette)[ i ] : (*neg_palette)[ i ];
+
 }
 
-int main( int argc, char *argv[] )
-{
-   cout << "Hilbert curve display of wiggle data.\n";
-   cout << "(c) Simon Anders, European Bioinformatics Institute (EMBL-EBI)\n";
-   cout << "sanders@fs.tum.de, version 0.99.3, date 2008-08-20\n";      
-   cout << "Released under GNU General Public License version 3\n\n";      
-
-   bool same_scale = true;
-   bool pow2 = false;
-   char opt;
-   while( (opt = getopt(argc, argv, "sph") ) != -1 )
-      switch( opt ) {
-         case 's':
-	    same_scale = false;
-	    break;
-         case 'p':
-	    pow2 = true;
-	    break;
-	 case '?':
-	    exit( 1 );
-	 case 'h':
-	    cout << "Usage: hilbert [options] <bwc file> [ <bwc file> ... ]\n\n"
-	    "Options:\n"
-	    "   -s: Scale all vectors such that they use the full plotting area.\n"
-	    "       The default is to pad grey area to the end of smaller vector\n"
-	    "       such that all vectors are displayed in the same scale.\n"
-	    "   -p: Pad grey area to the end of all vectors such that their length\n"
-	    "       becomes a power of 2. This ensures that individual vector elements\n"
-	    "       become squares in high zoom.\n"
-	    "   -h: Display this help message.\n";
-	    exit( 0 );
-      }
-   Gtk::Main kit(argc, argv);
-   vector<string> filenames;
-   if( argc == 1 ) {
-      cerr << "Call with a list of bwc files as command-line arguments.\n";
-      exit( 1);
-   }
-   for( int i = optind; i < argc; i++ )
-      filenames.push_back( argv[i] );
-   vector< DataColorizer * > * dataCols = load_data( filenames, same_scale, pow2 );
-   cout << "Preparing display...\n"; cout.flush();
-   MainWindowWithFileButtons win( dataCols, false );   
-   Gtk::Main::run( win );   
-}      
-
-*/
 
 int main( int argc, char *argv[] )
 {
@@ -555,6 +343,6 @@ int main( int argc, char *argv[] )
    Gtk::Main kit(argc, argv);
    std::vector< DataColorizer * > dataCols;
    dataCols.push_back( new EmptyColorizer() );
-   MainWindowWithFileButtons win( &dataCols, false );   
+   MainWindowForStandalone win( &dataCols, false );   
    Gtk::Main::run( win );   
 }      

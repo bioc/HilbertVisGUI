@@ -7,9 +7,8 @@
 #include "ruler.h"
 
 MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, 
-      bool portrait, bool fileButtons )
+      bool portrait, bool for_standalone )
  : dataCols( dataCols_ ),
-   cur_dataCol_idx( 0 ),
    canvas( (*dataCols_)[0] ),
    btnZoomOut4x( "Zoom out 4×" ),
    btnZoomOut64x( "Zoom out 64×" ),
@@ -19,7 +18,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    btnNext( "Next" ),
    btnOpen( "Open" ),
    btnClose( "Close" ),
-   tbl1( fileButtons ? 2 : 1, 6, true ),
+   tbl1( for_standalone ? 2 : 1, 6, true ),
    frame1( "Bin under mouse cursor" ),
    frame2( "Full sequence" ),
    frame3( "Displayed part of sequence" ),
@@ -74,7 +73,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    tbl1.attach( btnPrev, 0, 1, 0, 1 );
    tbl1.attach( cboxtSeqnames, 1, 5, 0, 1 );
    tbl1.attach( btnNext, 5, 6, 0, 1 );
-   if( fileButtons ) {
+   if( for_standalone ) {
       tbl1.attach( btnOpen, 0, 1, 1, 2 );
       tbl1.attach( btnClose, 1, 2, 1, 2 );
    }
@@ -135,10 +134,18 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
 
 void MainWindow::addColorizer( DataColorizer * dcol )
 {
-   dataCols->push_back( dcol );
-   char buf[150];
-   snprintf( buf, 150, "[%d]  %50s", dataCols->size(), dcol->get_name().c_str() );
-   cboxtSeqnames.append_text( buf );
+   char buf[50];
+   if( dynamic_cast<EmptyColorizer*>( (*dataCols)[0] ) ) {
+      (*dataCols)[ 0 ] = dcol;
+      snprintf( buf, 50, "[%d] %s", 0, dcol->get_name().c_str() );
+      cboxtSeqnames.clear_items( );
+      cboxtSeqnames.append_text( buf );
+      cboxtSeqnames.set_active( 0 );
+   } else {
+      dataCols->push_back( dcol );
+      snprintf( buf, 50, "[%d] %s", dataCols->size()-1, dcol->get_name().c_str() );
+      cboxtSeqnames.append_text( buf );
+   }
 }
 
 void MainWindow::on_btnZoomOut4x_clicked( void )
@@ -210,7 +217,8 @@ void MainWindow::on_btnClose_clicked( void )
 
 void MainWindow::on_cboxtSeqnames_changed( void )
 {
-   canvas.set_dataCol( (*dataCols)[ cboxtSeqnames.get_active_row_number() ] );
+   if( cboxtSeqnames.get_active_row_number() >= 0 )
+      canvas.set_dataCol( (*dataCols)[ cboxtSeqnames.get_active_row_number() ] );
 }
 
 void MainWindow::on_adjDisplayedValueRange_changed( void )
