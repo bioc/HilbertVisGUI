@@ -184,6 +184,7 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    seqdialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
    if( seqdialog.run( ) != Gtk::RESPONSE_OK )
       return;
+   seqdialog.hide( );
 
    step_vector<double> * sv;
    string seqname = lvt.get_text( lvt.get_selected()[0] );
@@ -194,7 +195,49 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
          Glib::filename_display_basename( dialog.get_filename( ) ) +
 	 " could not be loaded.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
       mdlg.run();
+      return;
    }
+   
+   bool valid_input = true;
+   long ans = -17;	 
+   do{ 
+      Gtk::Dialog lendialog( "Enter length" );      
+      Gtk::Label lbllen( "\n"
+	  "The length of the loaded sequence\n"
+	  "is not provided by the file. Please\n"
+	  "enter it manually. If you want to\n"
+	  "use the maximum index found in the\n"
+	  "file as length, just press 'Ok'.\n" ); 
+      Gtk::TextView tv;
+      char buf[50];
+      snprintf( buf, 50, "%ld", sv->max_index );
+      tv.get_buffer( )->set_text( buf );
+      lendialog.get_vbox()->add( lbllen );
+      lendialog.get_vbox()->add( tv );
+      lendialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+      lendialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
+      lendialog.show_all_children( );
+      //lendialog.run( );
+      lendialog.hide( );
+      if( lendialog.run( ) != Gtk::RESPONSE_OK )
+         return;
+      try{
+         ans = from_string<long int>( tv.get_buffer( )->get_text() );
+      } catch( conversion_failed_exception e ) {
+         valid_input = false;
+      }
+      std::cout << ans << std::endl;
+      if( ans <= 0 )
+         valid_input = false;
+      if( !valid_input ) {
+	 Gtk::MessageDialog mdlg( "Please enter a positive integer number.", 
+	    false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+	 mdlg.run();
+      }
+   } while( !valid_input );
+   long old_maxindex = sv->max_index;
+   sv->max_index = ans;
+   sv->set_value( old_maxindex, ans, 0 );
      
    addColorizer( new BidirColorizer( new StepDataVector( sv, abs_bin_max ), 
       Glib::filename_display_basename( dialog.get_filename( ) ) + ": " + seqname, 
@@ -228,6 +271,7 @@ void MainWindowForStandalone::brew_palettes( double max_value, double gamma )
    // NA color:
    shared_na_color.set_grey_p( .5 );
 
+   paletteBar.set_palettes( max_value, &shared_palette, &shared_palette_neg );
 }
 
 StepDataVector::StepDataVector( step_vector<double> * v_, 

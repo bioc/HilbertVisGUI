@@ -16,4 +16,16 @@ class Ruler : public Gtk::DrawingArea {
    virtual void on_adj_changed( void );
 };
 
+class PaletteBar : public Gtk::DrawingArea {
+  public:
+   PaletteBar( );
+   void set_palettes( double max_value_, std::vector< Gdk::Color > * palette_, 
+      std::vector< Gdk::Color > * neg_palette_ = NULL );
+  protected: 
+   double max_value;
+   std::vector< Gdk::Color > * palette;
+   std::vector< Gdk::Color > * neg_palette;
+   virtual bool on_expose_event( GdkEventExpose* event );
+};
+
 #endif // HILBERT_RULER_H

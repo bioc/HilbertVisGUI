@@ -38,12 +38,12 @@ class MainWindow : public Gtk::Window {
    // Member widgets:
    HilbertCurveDisplay canvas;
    Gtk::Button btnZoomOut4x, btnZoomOut64x, btnCoarser, btnFiner, btnPrev, btnNext;
-   Gtk::Button btnOpen, btnClose;
-   Gtk::HBox hbox1, hbox2, hbox3, hbox4, hbox5, hbox6, hbox7;
+   Gtk::Button btnOpen, btnClose, btnDown, btnUp;
+   Gtk::HBox hbox1, hbox2, hbox3, hbox4, hbox5, hbox6, hbox7, hbox8;
    Gtk::VBox vbox1;
    Gtk::Box * box0;
-   Gtk::Table tbl1;
-   Gtk::Frame frame1, frame2, frame3, frame4, frame5, frame6, frame7;
+   Gtk::Table tbl1, tbl2;
+   Gtk::Frame frame1, frame2, frame3, frame4, frame5, frame6, frame7, frame8;
    Gtk::Label lblPos, lblValue;
    Ruler rulerPointerPos;
    Ruler rulerDispValueRange;
@@ -51,6 +51,7 @@ class MainWindow : public Gtk::Window {
    Gtk::RadioButtonGroup rbtngLeftMouse;
    Gtk::RadioButton rbtnZoomIn4x;
    Gtk::RadioButton rbtnZoomIn64x, rbtnPlotLin;
+   PaletteBar paletteBar;
 };
 
 #endif //HILBERT_WINDOW_H

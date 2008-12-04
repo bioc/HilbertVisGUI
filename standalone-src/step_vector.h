@@ -15,7 +15,7 @@ class step_vector {
    long int max_index;
    typedef typename std::map< long int, T >::const_iterator const_iterator;
    step_vector( long int length, long int min_index_=0 );
-   T operator[]( long int i ) const;
+   const T operator[]( long int i ) const; // How can I make sure that this is not used as l-value?
    void set_value( long int from, long int to, T value );
    void add_value( long int from, long int to, T value );
    const_iterator get_values( long int from );
@@ -35,7 +35,7 @@ step_vector<T>::step_vector( long int length, long int min_index_ )
 }
 
 template< class T >
-T step_vector<T>::operator[]( long int i ) const
+const T step_vector<T>::operator[]( long int i ) const
 {
    if( i > max_index ) 
       throw std::out_of_range( "Index too large in step_vector." );

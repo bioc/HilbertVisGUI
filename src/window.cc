@@ -18,6 +18,8 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    btnNext( "Next" ),
    btnOpen( "Open" ),
    btnClose( "Close" ),
+   btnDown( "Down" ),
+   btnUp( "Up" ),
    tbl1( for_standalone ? 2 : 1, 6, true ),
    frame1( "Bin under mouse cursor" ),
    frame2( "Full sequence" ),
@@ -26,13 +28,15 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    frame5( "Zoom out" ),
    frame6( "Pixel size" ),
    frame7( "Displayed data" ),
+   frame8( "Color key" ),
    lblPos( "Position: ---" ),
    lblValue( "Value: ---:" ),
    rulerPointerPos( &canvas.get_adjPointerPos() ),
    rulerDispValueRange( &canvas.get_adjDisplayedValueRange() ),
    rbtnZoomIn4x( rbtngLeftMouse, "Zoom in 4×" ),
    rbtnZoomIn64x( rbtngLeftMouse, "Zoom in 64×" ),
-   rbtnPlotLin( rbtngLeftMouse, "Linear plot" )
+   rbtnPlotLin( rbtngLeftMouse, "Linear plot" ),
+   paletteBar( )
 {
 
    hbox1.set_homogeneous( true );
@@ -67,7 +71,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    hbox4.set_spacing( 7 );
    hbox4.set_homogeneous( true );
    hbox4.pack_start( frame5 );
-   hbox4.pack_start( frame6 );   
+   hbox4.pack_start( frame6 ); 
 
    tbl1.set_col_spacings( 10 );
    tbl1.attach( btnPrev, 0, 1, 0, 1 );
@@ -78,11 +82,21 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
       tbl1.attach( btnClose, 1, 2, 1, 2 );
    }
    frame7.add( tbl1 );
+
+   if( for_standalone ) {
+      tbl2.set_col_spacings( 10 );
+      tbl2.attach( btnDown, 0, 1, 0, 1 );
+      tbl2.attach( paletteBar, 1, 5, 0, 1 );
+      tbl2.attach( btnUp, 5, 6, 0, 1 );
+      frame8.add( tbl2 );
+   }
    
    vbox1.set_spacing( 10 );
    vbox1.pack_start( frame7, Gtk::PACK_SHRINK );
    vbox1.pack_start( frame1, Gtk::PACK_SHRINK );
    vbox1.pack_start( hbox2, Gtk::PACK_SHRINK );
+   if( for_standalone ) 
+      vbox1.pack_start( frame8, Gtk::PACK_SHRINK );
    vbox1.pack_start( frame4, Gtk::PACK_SHRINK );
    vbox1.pack_start( hbox4, Gtk::PACK_SHRINK );
 

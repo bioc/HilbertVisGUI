@@ -19,6 +19,14 @@ std::string int2strB( int a )
    return s;
 }
 
+std::string double2strB( double a )
+{
+   static const int nbuf = 300;
+   char buf[nbuf];
+   snprintf( buf, nbuf, "%.2g", a );
+   return buf;
+}
+
 Ruler::Ruler( InvalidableAdjustment * adj_ )
 {
    adj = adj_;
@@ -79,4 +87,93 @@ void Ruler::on_adj_changed( void )
 {
    queue_draw( );
 }
+
+
+PaletteBar::PaletteBar( )
+{
+   set_palettes( 0, NULL, NULL );
+   std::cerr << "foo" << std::endl;
+}   
+
+void PaletteBar::set_palettes( double max_value_,
+      std::vector< Gdk::Color > * palette_, 
+      std::vector< Gdk::Color > * neg_palette_ )
+{
+   max_value = max_value_;
+   palette = palette_;
+   neg_palette = neg_palette_;
+   queue_draw( );
+}        
+      
+bool PaletteBar::on_expose_event( GdkEventExpose* event )
+{
+
+   Gdk::Color col;   
+   Glib::RefPtr< Gdk::GC > gc = Gdk::GC::create( get_window() );
+   int width, height;
+   get_window()->get_size( width, height );
+
+   if( palette ) {
+      int semi_pal_width = neg_palette ? width/2 : width;
+      for( int x = 0; x < semi_pal_width; x++ ) {
+         col = (*palette)[ palette->size() * x / semi_pal_width ];
+         get_window()->get_colormap()->alloc_color( col );
+	 gc->set_foreground( col );
+	 get_window()->draw_line( gc, neg_palette ? width/2 + x : x, 0, 
+            neg_palette ? width/2 + x : x, height-1 ); 
+      }
+   }
+   if( neg_palette ) {
+      int semi_pal_width = width/2;
+      for( int x = 0; x < semi_pal_width; x++ ) {
+         col = (*neg_palette)[ palette->size() * (semi_pal_width-1 - x) / semi_pal_width ];
+         get_window()->get_colormap()->alloc_color( col );
+	 gc->set_foreground( col );
+	 get_window()->draw_line( gc, x, 0, x, height-1 ); 
+      }
+   }
+   col.set( "black" );
+   get_window()->get_colormap()->alloc_color( col );
+   gc->set_foreground( col );
+   get_window()->draw_line( gc, 0, 0, 0, height-1 );   
+   get_window()->draw_line( gc, width-1, 0, width-1, height-1 );   
+   get_window()->draw_line( gc, 0, height-1, width-1, height-1 );   
+
+   if( palette ) {
+      col =  (*palette)[ palette->size()-1 ];
+      col.set_rgb_p( 1 - col.get_red_p(), 1 - col.get_green_p(), 1 - col.get_blue_p() );
+      get_window()->get_colormap()->alloc_color( col );
+      gc->set_foreground( col );
+   }
+
+   Glib::RefPtr< Pango::Layout > pl = create_pango_layout( 
+      double2strB( -max_value ) );
+   int pl_width, pl_height;
+   pl->get_pixel_size( pl_width, pl_height );
+   get_window()->draw_layout( gc, 3, height - pl_height, pl );
+
+   if( neg_palette ) {
+      col = (*neg_palette)[ neg_palette->size()-1 ];
+      col.set_rgb_p( 1 - col.get_red_p(), 1 - col.get_green_p(), 1 - col.get_blue_p() );
+      get_window()->get_colormap()->alloc_color( col );
+      gc->set_foreground( col );
+   }
+
+   pl = create_pango_layout( double2strB( max_value ) );
+   pl->get_pixel_size( pl_width, pl_height );
+   get_window()->draw_layout( gc, width - pl_width - 3, height - pl_height, pl );
+
+   if( palette ) {
+      col = (*palette)[ 0 ];
+      col.set_rgb_p( 1 - col.get_red_p(), 1 - col.get_green_p(), 1 - col.get_blue_p() );
+      get_window()->get_colormap()->alloc_color( col );
+      gc->set_foreground( col );
+   }
+
+   pl = create_pango_layout( "0" );
+   pl->get_pixel_size( pl_width, pl_height );
+   get_window()->draw_layout( gc, width/2 - pl_width/2, height - pl_height, pl );
+   
+   return true;
+};
 
