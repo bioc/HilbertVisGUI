@@ -92,7 +92,6 @@ void Ruler::on_adj_changed( void )
 PaletteBar::PaletteBar( )
 {
    set_palettes( 0, NULL, NULL );
-   std::cerr << "foo" << std::endl;
 }   
 
 void PaletteBar::set_palettes( double max_value_,
@@ -102,7 +101,8 @@ void PaletteBar::set_palettes( double max_value_,
    max_value = max_value_;
    palette = palette_;
    neg_palette = neg_palette_;
-   queue_draw( );
+   if( get_window() )
+      queue_draw( );
 }        
       
 bool PaletteBar::on_expose_event( GdkEventExpose* event )

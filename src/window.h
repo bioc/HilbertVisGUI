@@ -27,6 +27,11 @@ class MainWindow : public Gtk::Window {
    virtual void on_btnNext_clicked( void );
    virtual void on_btnOpen_clicked( void );
    virtual void on_btnClose_clicked( void );
+   virtual void on_btnSave_clicked( void );
+   virtual void on_btnDown_clicked( void );
+   virtual void on_btnUp_clicked( void );
+   virtual void on_btnAbout_clicked( void );
+   virtual void on_btnQuit_clicked( void );
    virtual void on_cboxtSeqnames_changed( void );
    virtual void on_adjDisplayedValueRange_changed( void );
    virtual void on_adjPointerPos_value_changed( void );
@@ -38,7 +43,7 @@ class MainWindow : public Gtk::Window {
    // Member widgets:
    HilbertCurveDisplay canvas;
    Gtk::Button btnZoomOut4x, btnZoomOut64x, btnCoarser, btnFiner, btnPrev, btnNext;
-   Gtk::Button btnOpen, btnClose, btnDown, btnUp;
+   Gtk::Button btnOpen, btnClose, btnSave, btnDown, btnUp, btnAbout, btnQuit;
    Gtk::HBox hbox1, hbox2, hbox3, hbox4, hbox5, hbox6, hbox7, hbox8;
    Gtk::VBox vbox1;
    Gtk::Box * box0;

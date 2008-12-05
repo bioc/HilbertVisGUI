@@ -26,6 +26,7 @@ class DataColorizer {
    int zoom_level;
    long zoom_offset;
    int pixel_size_level;  
+   int palette_level; // this one only used by stand-alone version
 };
 
 
@@ -57,6 +58,7 @@ class HilbertCurveDisplay : public Gtk::DrawingArea {
    HilbertCurveDisplay( DataColorizer * dataCol_, 
       int pixel_size_level_ = 1, int canvas_size_level_ = 9);
    void set_dataCol( DataColorizer * dataCol_ );
+   const DataColorizer * get_dataCol( ) const;
    long long get_begin( void ) const;
    double get_bin_size( void ) const;
    int get_num_pixels( void ) const;   
@@ -66,7 +68,8 @@ class HilbertCurveDisplay : public Gtk::DrawingArea {
    int get_zoom_level( void ) const;
    long get_zoom_offset( void ) const;
    void set_zoom( int zoom_level_, long zoom_offset_ );
-   const DataColorizer * get_dataCol( void ) const;
+   int get_palette_level( void ) const;
+   void set_palette_level( int palette_level_ );
    InvalidableAdjustment & get_adjDisplayedValueRange( void );
    InvalidableAdjustment & get_adjPointerPos( void );
    sigc::signal< void, GdkEventButton *, long, long > signal_mouse_clicked( void );
@@ -84,6 +87,7 @@ class HilbertCurveDisplay : public Gtk::DrawingArea {
    DataColorizer * dataCol;
    int zoom_level;
    long zoom_offset;
+   int palette_level; // this one only used by stand-alone version
    InvalidableAdjustment adjDisplayedValueRange;
    InvalidableAdjustment adjPointerPos;
    sigc::signal< void, GdkEventButton *, long, long > sgn_MouseClicked;

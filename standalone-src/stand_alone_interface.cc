@@ -37,7 +37,12 @@ class MainWindowForStandalone : public MainWindow {
   protected:
    virtual void on_btnOpen_clicked( void );
    virtual void on_btnClose_clicked( void );
-   void brew_palettes( double max_value, double gamma = 1.0 );
+   virtual void on_btnSave_clicked( void );
+   virtual void on_btnDown_clicked( void );
+   virtual void on_btnUp_clicked( void );
+   virtual void on_btnAbout_clicked( void );
+   virtual void on_btnQuit_clicked( void );
+   void brew_palettes( int palette_level );
    
    // Global palette information
    const int shared_palette_size;
@@ -66,7 +71,8 @@ MainWindowForStandalone::MainWindowForStandalone(
     shared_palette_neg( shared_palette_size ),
     shared_palette_steps( shared_palette_size-1 )
 {
-   brew_palettes( 10 );
+   brew_palettes( 4 );
+   rbtnPlotLin.set_sensitive( false );
 }  
 
 
@@ -107,8 +113,6 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    if( result != Gtk::RESPONSE_OK )
       return;
    dialog.hide( );
-   
-   std::cout << dialog.get_filename() << std::endl;
    
    enum {gff, wig, maq} filetype;
    
@@ -226,7 +230,6 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
       } catch( conversion_failed_exception e ) {
          valid_input = false;
       }
-      std::cout << ans << std::endl;
       if( ans <= 0 )
          valid_input = false;
       if( !valid_input ) {
@@ -248,11 +251,113 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
 
 void MainWindowForStandalone::on_btnClose_clicked( void )
 {
-   error_bell();
+   Gtk::MessageDialog mdlg( 
+      "Unloading data has not yet been\n"
+      "implemented, sorry. I'll get to\n"
+      "it soon.", 
+      false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+   mdlg.run();
 }
 
-void MainWindowForStandalone::brew_palettes( double max_value, double gamma )
+void MainWindowForStandalone::on_btnSave_clicked( void )
 {
+   Gtk::FileChooserDialog dialog("Save displayed image as PNG file",
+      Gtk::FILE_CHOOSER_ACTION_SAVE );
+   dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+   dialog.add_button(Gtk::Stock::SAVE, Gtk::RESPONSE_OK);
+   dialog.set_do_overwrite_confirmation();
+
+   Gtk::FileFilter filt1, filt2;
+
+   filt1.add_pattern("*.png");
+   filt1.set_name("Portable Networks Graphics (PNG) format");
+   dialog.add_filter( filt1 );
+
+   filt2.add_pattern("*");
+   filt2.set_name("All files");
+   dialog.add_filter( filt2 );
+   
+   int result = dialog.run();   
+   if( result != Gtk::RESPONSE_OK )
+      return;
+   dialog.hide( );
+
+   std::string filename = dialog.get_filename( );
+   if( filename.substr( filename.length()-4 ) != ".png" ) {
+      filename += ".png";
+      if( Glib::file_test( filename, Glib::FILE_TEST_EXISTS ) ) {
+         Gtk::MessageDialog mdlg( string( "The file " ) + 
+            Glib::filename_display_basename( dialog.get_filename( ) ) +
+	    " already exists.\nDo you want to overwrite it?", 
+  	    false, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_OK_CANCEL, true );
+         if( mdlg.run() != Gtk::RESPONSE_OK )
+	    return;
+      }
+   }
+
+   int width, height;
+   canvas.get_dataCol()->pixmap->get_size( width, height );
+   Glib::RefPtr<Gdk::Pixbuf> pb = Gdk::Pixbuf::create( 
+      canvas.get_dataCol()->pixmap->get_image( 0, 0, width, height ), 
+      0, 0, width, height );
+   pb->save( filename, "png" );
+}
+
+void MainWindowForStandalone::on_btnDown_clicked( void )
+{
+   brew_palettes( canvas.get_palette_level() - 1 );
+}
+
+void MainWindowForStandalone::on_btnUp_clicked( void )
+{
+   brew_palettes( canvas.get_palette_level() + 1 );
+}
+
+void MainWindowForStandalone::on_btnAbout_clicked( void )
+{
+   Gtk::MessageDialog mdlg( 
+      "<big><b>HilbertVis</b></big>\n"
+      "<i>version of " __DATE__ "</i>\n"
+      "\n"
+      "A tool to visualize extremely long data vectors.\n"
+      "\n" 
+      "Author: Simon Anders, EMBL-EBI, <tt>anders@fs.tum.de</tt>\n" 
+      "\n"
+      "For more information, see:\n"
+      "<b><tt>   http://www.ebi.ac.uk/~anders/hilbert</tt></b>\n"
+      "\n"
+      "This is free software, licensed with the\n"
+      "GNU General Public License, version 3.\n"
+      "<small>See http://www.gnu.org/licenses/gpl-3.0-standalone.html\n"
+      "for the text of the license</small>\n",
+      true, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true );
+   mdlg.run();
+}
+
+void MainWindowForStandalone::on_btnQuit_clicked( void )
+{
+   Gtk::Main::quit();
+}
+
+void MainWindowForStandalone::brew_palettes( int palette_level )
+{
+   const double gamma = 1.0;
+   // get max_value
+   
+   double max_value = exp( ( palette_level / 4 ) * log( 10 ) );
+   if( palette_level % 4 == 1 )
+      max_value *= 1.8;
+   else if( palette_level % 4 == 2 )
+      max_value *= 3.2;
+   else if( palette_level % 4 == 3 )
+      max_value *= 5.6;
+   else if( palette_level % 4 == -1 )
+      max_value /= 1.8;
+   else if( palette_level % 4 == -2 )
+      max_value /= 3.2;
+   else if( palette_level % 4 == -3 )
+      max_value /= 5.6;
+
    // Construct palette:
    Gdk::Color col;
    for( int i = 0; i < shared_palette_size; i++ ) {
@@ -272,6 +377,7 @@ void MainWindowForStandalone::brew_palettes( double max_value, double gamma )
    shared_na_color.set_grey_p( .5 );
 
    paletteBar.set_palettes( max_value, &shared_palette, &shared_palette_neg );
+   canvas.set_palette_level( palette_level );
 }
 
 StepDataVector::StepDataVector( step_vector<double> * v_, 
@@ -379,11 +485,6 @@ Gdk::Color BidirColorizer::get_bin_color( long bin_start, long bin_size ) const
 
 int main( int argc, char *argv[] )
 {
-   cout << "Hilbert curve display of wiggle data.\n";
-   cout << "(c) Simon Anders, European Bioinformatics Institute (EMBL-EBI)\n";
-   cout << "sanders@fs.tum.de, version 0.99.3, date 2008-08-20\n";      
-   cout << "Released under GNU General Public License version 3\n\n";      
-
    Gtk::Main kit(argc, argv);
    std::vector< DataColorizer * > dataCols;
    dataCols.push_back( new EmptyColorizer() );

@@ -16,10 +16,13 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    btnFiner( "Finer" ),
    btnPrev( "Previous" ),
    btnNext( "Next" ),
-   btnOpen( "Open" ),
-   btnClose( "Close" ),
-   btnDown( "Down" ),
-   btnUp( "Up" ),
+   btnOpen( "Load" ),
+   btnClose( "Unload" ),
+   btnSave( "Save Img" ),
+   btnDown( "Darker" ),
+   btnUp( "Lighter" ),
+   btnAbout( "About" ),
+   btnQuit( "Quit" ),
    tbl1( for_standalone ? 2 : 1, 6, true ),
    frame1( "Bin under mouse cursor" ),
    frame2( "Full sequence" ),
@@ -78,8 +81,11 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    tbl1.attach( cboxtSeqnames, 1, 5, 0, 1 );
    tbl1.attach( btnNext, 5, 6, 0, 1 );
    if( for_standalone ) {
-      tbl1.attach( btnOpen, 0, 1, 1, 2 );
+      tbl1.attach( btnOpen,  0, 1, 1, 2 );
       tbl1.attach( btnClose, 1, 2, 1, 2 );
+      tbl1.attach( btnSave,  2, 3, 1, 2 );
+      tbl1.attach( btnAbout, 4, 5, 1, 2 );
+      tbl1.attach( btnQuit,  5, 6, 1, 2 );
    }
    frame7.add( tbl1 );
 
@@ -132,6 +138,16 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
       sigc::mem_fun( *this, &MainWindow::on_btnOpen_clicked) );
    btnClose.signal_clicked().connect( 
       sigc::mem_fun( *this, &MainWindow::on_btnClose_clicked) );
+   btnSave.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnSave_clicked) );
+   btnQuit.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnQuit_clicked) );
+   btnAbout.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnAbout_clicked) );
+   btnUp.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnUp_clicked) );
+   btnDown.signal_clicked().connect( 
+      sigc::mem_fun( *this, &MainWindow::on_btnDown_clicked) );
    cboxtSeqnames.signal_changed().connect( 
       sigc::mem_fun( *this, &MainWindow::on_cboxtSeqnames_changed) );
    canvas.get_adjDisplayedValueRange().signal_changed().connect(
@@ -151,15 +167,21 @@ void MainWindow::addColorizer( DataColorizer * dcol )
    char buf[50];
    if( dynamic_cast<EmptyColorizer*>( (*dataCols)[0] ) ) {
       (*dataCols)[ 0 ] = dcol;
-      snprintf( buf, 50, "[%d] %s", 0, dcol->get_name().c_str() );
+      snprintf( buf, 35, "[%d] %s", 0, dcol->get_name().c_str() );
       cboxtSeqnames.clear_items( );
       cboxtSeqnames.append_text( buf );
       cboxtSeqnames.set_active( 0 );
    } else {
       dataCols->push_back( dcol );
-      snprintf( buf, 50, "[%d] %s", dataCols->size()-1, dcol->get_name().c_str() );
+      snprintf( buf, 35, "[%d] %s", dataCols->size()-1, dcol->get_name().c_str() );
       cboxtSeqnames.append_text( buf );
    }
+   /*
+   if( equalize_full_length ) {
+      if( dcol->get_length() <= current_full_length )
+         dcol->set_
+   }
+   */
 }
 
 void MainWindow::on_btnZoomOut4x_clicked( void )
@@ -228,6 +250,25 @@ void MainWindow::on_btnClose_clicked( void )
 {
 }
 
+void MainWindow::on_btnSave_clicked( void )
+{
+}
+
+void MainWindow::on_btnDown_clicked( void )
+{
+}
+
+void MainWindow::on_btnUp_clicked( void )
+{
+}
+
+void MainWindow::on_btnAbout_clicked( void )
+{
+}
+
+void MainWindow::on_btnQuit_clicked( void )
+{
+}
 
 void MainWindow::on_cboxtSeqnames_changed( void )
 {

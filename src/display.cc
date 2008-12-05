@@ -100,7 +100,8 @@ void HilbertCurveDisplay::set_dataCol( DataColorizer * dataCol_ )
       return;
    if( !dataCol->pixmap || dataCol->zoom_level != zoom_level || 
          dataCol->zoom_offset != zoom_offset || 
-	 dataCol->pixel_size_level != pixel_size_level) {
+	 dataCol->pixel_size_level != pixel_size_level ||
+	 dataCol->palette_level != palette_level ) {
       fill_pixmap();
    }
    queue_draw( );
@@ -220,6 +221,7 @@ void HilbertCurveDisplay::fill_pixmap( void )
    dataCol->zoom_level = zoom_level;
    dataCol->zoom_offset = zoom_offset;
    dataCol->pixel_size_level = pixel_size_level;
+   dataCol->palette_level = palette_level;
    if( get_toplevel() && get_toplevel()->get_window() ) {
       get_window()->set_cursor( Gdk::Cursor(Gdk::TCROSS) );
       get_toplevel()->get_window()->set_cursor( );
@@ -245,6 +247,21 @@ void HilbertCurveDisplay::set_pixel_size_level( int pixel_size_level_)
    set_adjDisplayedValueRange( );
    queue_draw( );
 }
+
+int HilbertCurveDisplay::get_palette_level( void ) const
+{
+   return palette_level;
+}   
+
+void HilbertCurveDisplay::set_palette_level( int palette_level_ )
+{
+   palette_level = palette_level_;
+   if( !get_window() || !is_visible() )
+      return;
+   fill_pixmap( );
+   queue_draw( );
+}
+
 
 int HilbertCurveDisplay::get_zoom_level( void ) const
 {
