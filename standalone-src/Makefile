@@ -33,11 +33,14 @@ data_loading.o: data_loading.cc step_vector.h
 
 stand_alone_interface.o: stand_alone_interface.cc  \
    ${RSRC}/colorizers.h ${RSRC}/display.h ${RSRC}/ruler.h \
-   ${RSRC}/window.h data_loading.h step_vector.h
+   ${RSRC}/window.h data_loading.h step_vector.h main_icon.c
 	${CC} -c stand_alone_interface.cc ${GTKMM_CFLAGS}
 	
 %.o: ${RSRC}/%.cc
 	${CC} -c -o $@ $< ${GTKMM_CFLAGS} 	
+
+main_icon.c: main_icon.png
+	gdk-pixbuf-csource main_icon.png --name main_icon --raw >main_icon.c
 	
 clean:
-	rm -f *.o hilbert conv2bwc
+	rm -f *.o hilbert conv2bwc main_icon.c

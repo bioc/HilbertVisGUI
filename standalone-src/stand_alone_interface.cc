@@ -71,6 +71,8 @@ MainWindowForStandalone::MainWindowForStandalone(
     shared_palette_neg( shared_palette_size ),
     shared_palette_steps( shared_palette_size-1 )
 {
+   #include "main_icon.c"
+   set_default_icon( Gdk::Pixbuf::create_from_inline( -1, main_icon ) ); 
    brew_palettes( 4 );
    rbtnPlotLin.set_sensitive( false );
 }  
