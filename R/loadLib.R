@@ -27,59 +27,63 @@ Hilbert.ProtEnv <- NULL
 
 failedToLoadDLL <- function( ) {
 
-   cat( sep="\n",
-      "",
-      "The package's DLL could not be loaded. Most likely this is",
-      "because you do not habe 'gtkmm' installed on your system,",
-      "which is required by the package." )
+   if( .Platform$pkgType != "source" ) {
+   
+      # binary packages used
+   
+      cat( sep="\n",
+         "",
+         " | The package's DLL could not be loaded. Most likely this is",
+         " | because you do not have 'gtkmm' installed on your system,",
+         " | which is required by the package." )
       
-   switch( .Platform$pkgType,
-      win.binary  = cat( sep="\n",
-	 "",
-	 "To install gtkmm, simply download the automatic installer found",
-	 "at the following URL:",
-	 "http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/2.14/gtkmm-win32-runtime-2.14.1-2.exe",
-	 "Simply start the installer, accept all the default settings,",
-	 "then restart R and try again.",
-	 "" ),
-      mac.binary = cat( sep="\n",
-	 "",
-	 "If you are using the MacPorts system (www.macports.org) or",
-	 "the Fink ports system, use one of these to install the",
-	 "'gtkmm' port. Then, restart R and try again.",
-	 "If you do not use a ports system, please consider installing",
-	 "MacPorts or wait for the GTK+ Project Team to finish their",
-	 "native Mac version: http://www.gtk.org/download-macos.html",
-	 "" ),
-      source = {
-	 switch( .Platform$OS.type,
-	    unix = cat( sep="\n",
+      switch( .Platform$pkgType,
+         win.binary  = cat( sep="\n",
+              "",
+   	      " | To install gtkmm, simply download the automatic installer found",
+   	      " | at the following URL:",
+   	      " | http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/2.14/gtkmm-win32-runtime-2.14.1-2.exe",
+   	      " | Simply start the installer, accept all the default settings,",
+   	      " | then restart R and try again to load this package.",
+	      "" ),
+         mac.binary =  
+            cat( sep="\n",
                "",
-	       "On most Linux distributions and several other Unix variants,",
-	       "'gtkmm' can be easily installed with the distribution's ",
-	       "package manager. Have a look at the instructions at",
-	       "http://www.gtkmm.org/download.shtml (under the heading 'Binary')",
-	       "to see what you need to install. After you have installed gtkmm,",
-	       "restart R and try again, please.",
-	       "" ),
-	    windows = cat( sep="\n",
-               "",
-	       "You are using source packages on Microsoft Windows, which is",
-	       "recommended for experienced users only. If you want to continue",
-	       "you can install a 'devel' package of 'gtkmm' with this automatic",
-	       "installer:",
-	       "http://ftp.gnome.org/pub/gnome/binaries/win32/gtkmm/2.14/gtkmm-win32-devel-2.14.1-2.exe",
-	       "" ),
-	       # Note that a Windows source package user should not see the above
-	       # message as she cannot compile the package without having first 
-	       # installed the mentioned package. Nevertheless I leave this in in
-	       # case it is helpful for somebody
-            error( "Unknown value in .Platform$OS.type" ) ) },
-      error( "Unknown value in .Platform$pkgType" ) )
+               " | To install gtkmm, simply download the automatic install found",
+               " | by copying and pasting the following URL into the address",
+               " | line of your web browser (e.g., Safari):",
+               " | ",
+               " | http://www.ebi.ac.uk/~anders/gtkr/GTK+_2.14.X11_with_gtkmm.pkg.zip",
+               " | ",
+               " | The installer should start automatically. (If it does not, just ",
+               " | double-click onto the downloaded file",
+               " | After the installer has finished, restart R and try again ",
+               " | to load this package.",
+               "" ), 
+ 
+         stop( "Unknown value in .Platform$pkgType" ) ) 
+   } else {
+   
+       # source packages used
+       
+       # In this case gtkmm must be present as the user could otherwise not have
+       # managed to compile the package.
+
+      cat( sep="\n",
+         " | It seems that you installed this package from source. Hence it is odd that ",
+         " | you could succesfully build the DLL and now cannot load it. Something must",
+         " | have changed on your system. Maybe the error message above that was printed",
+         " | by 'library.dynam' is of help. Sorry that this message is not more helpful",
+         " | (it is meant for users of binary packages).",
+         "" )
+
+
+   }
 	       	 
    cat( sep="\n",
-      "If you continue to have problems, please let me ",
-      "(sanders@fs.tum.de) know." )
+      " | If you continue to have problems, please let me ",
+      " | (sanders@fs.tum.de) know.",
+      "" )
       
-   error( "Cannot load DLL." ) 	 
+   stop( "Cannot load DLL. Please read the help text above." ) 	 
 }

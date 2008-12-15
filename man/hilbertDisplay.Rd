@@ -107,7 +107,7 @@ beginning of the vector being displayed.}
 }
 \examples{
 random <- c( as.integer( runif(100000)*30 ) ) 
-ramp <- c( as.integer( 0:19999/100 ) ) 
-hilbertDisplay( random, ramp )
+ramp <- c( as.integer( 0:19999/100 ) )
+try( hilbertDisplay( random, ramp ) )
 }
 \author{Simon Anders, EMBL-EBI, \email{sanders@fs.tum.de}}

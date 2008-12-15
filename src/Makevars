@@ -1,11 +1,25 @@
+# This file chiefly ensures that the build process finds the
+# GTK libraries.
+
+# On Linux we assume that pkg-config finds them without help. For
+# the Mac, we add two directories to pkg-config's search path.
+# These are the places where Simon Urbanek's build of the GTK+
+# framework put the pkg-config files. If the build runs on Linux,
+# these directories will simply be ignored.
+
+export PATH:=$(PATH):/Library/Frameworks/GTK+.framework/Resources/bin
+export PKG_CONFIG_PATH:=$(PKG_CONFIG_PATH):/Library/Frameworks/GTK+.framework/Versions/Current/Resources/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Versions/2.14.X11/Resources/lib/pkgconfig
+
+# The following lines set the compiler and linker flags 
+# with the help of pkg-config:
+
 GTK_INC=`pkg-config gtkmm-2.4 --cflags`
 GTK_LIB=`pkg-config gtkmm-2.4 --libs`
-SO_NAME=HilbertVisGUI
-
 PKG_CFLAGS=$(GTK_INC) -DSO_NAME=$(SO_NAME)
 PKG_CPPFLAGS=$(PKG_CFLAGS)
-#LIBS=$(GTK_LIB)
 PKG_LIBS=$(GTK_LIB)
 
-CC=/ebi/research/software/Linux_x86_64/opt/stow/gcc-4.2.2/bin/gcc
-CXX=/ebi/research/software/Linux_x86_64/opt/stow/gcc-4.2.2/bin/g++
+# This is specific to HilbertVisGUI
+
+SO_NAME=HilbertVisGUI
+PKG_CFLAGS+=-DSO_NAME=$(SO_NAME)
