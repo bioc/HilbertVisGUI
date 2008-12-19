@@ -12,11 +12,11 @@ CC = g++ ${CFLAGS}
 
 HILBERTVIS_VERSION = `cat VERSION`
 
-all: hilbert conv2bwc
+all: hilbertvis conv2bwc
 
-hilbert: stand_alone_interface.o  colorizers.o \
+hilbertvis: stand_alone_interface.o  colorizers.o \
    display.o ruler.o window.o simple_regex_pp.o data_loading.o	
-	${CC} -o hilbert stand_alone_interface.o colorizers.o \
+	${CC} -o hilbertvis stand_alone_interface.o colorizers.o \
 	display.o ruler.o window.o simple_regex_pp.o data_loading.o \
 	${LIBZ} ${GTKMM_LIBS}
 	
@@ -42,7 +42,8 @@ stand_alone_interface.o: stand_alone_interface.cc  \
 	${CC} -c -o $@ $< ${GTKMM_CFLAGS} 	
 
 main_icon.c: main_icon.png
-	gdk-pixbuf-csource main_icon.png --name main_icon --raw >main_icon.c
+	gdk-pixbuf-csource main_icon.png --name main_icon --raw >main_icon.c \
+	   || rm main_icon.c
 	
 clean:
 	rm -f *.o hilbert conv2bwc main_icon.c
