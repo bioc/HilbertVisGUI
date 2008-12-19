@@ -127,8 +127,10 @@ bool HilbertCurveDisplay::on_expose_event( GdkEventExpose* event )
 
 bool HilbertCurveDisplay::on_button_press_event( GdkEventButton * event )
 {
-   assert( event->x >= 0 && event->y >= 0 );
-   assert( event->x < (1l<<canvas_size_level) && event->y < (1l<<canvas_size_level) );
+   if( event->x <= 0 || event->y <= 0 )
+      return false;
+   if( event->x >= (1l<<canvas_size_level) || event->y >= (1l<<canvas_size_level) )
+      return false;
    int rev_map_idx = (long(event->x) << canvas_size_level) | long(event->y);
 
    sgn_MouseClicked( event, dataCol->rev_map_lo[ rev_map_idx ], 

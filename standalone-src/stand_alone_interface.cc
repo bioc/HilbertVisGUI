@@ -353,12 +353,7 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
 
 void MainWindowForStandalone::on_btnClose_clicked( void )
 {
-   Gtk::MessageDialog mdlg( 
-      "Unloading data has not yet been\n"
-      "implemented, sorry. I'll get to\n"
-      "it soon.", 
-      false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
-   mdlg.run();
+   removeCurrentColorizer();
 }
 
 void MainWindowForStandalone::on_btnSave_clicked( void )

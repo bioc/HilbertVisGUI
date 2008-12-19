@@ -116,9 +116,9 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    add( *box0 );
    
    for( unsigned i = 0; i < dataCols->size(); i++ ) {
-      char buf[150];
-      snprintf( buf, 150, "[%d]  %s", i, (*dataCols)[i]->get_name().c_str() );
-      cboxtSeqnames.append_text( buf );
+      //char buf[150];
+      //snprintf( buf, 150, "[%d]  %s", i, (*dataCols)[i]->get_name().c_str() );
+      cboxtSeqnames.append_text( (*dataCols)[i]->get_name() ); //buf );
    }
    cboxtSeqnames.set_active( 0 );
 
@@ -164,25 +164,39 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
 
 void MainWindow::addColorizer( DataColorizer * dcol )
 {
-   char buf[50];
+   //char buf[50];
    if( dynamic_cast<EmptyColorizer*>( (*dataCols)[0] ) ) {
       (*dataCols)[ 0 ] = dcol;
-      snprintf( buf, 35, "[%d] %s", 0, dcol->get_name().c_str() );
+      //snprintf( buf, 35, "[%d] %s", 0, dcol->get_name().c_str() );
       cboxtSeqnames.clear_items( );
-      cboxtSeqnames.append_text( buf );
+      cboxtSeqnames.append_text( dcol->get_name().c_str() ); //buf );
       cboxtSeqnames.set_active( 0 );
    } else {
       dataCols->push_back( dcol );
-      snprintf( buf, 35, "[%d] %s", dataCols->size()-1, dcol->get_name().c_str() );
-      cboxtSeqnames.append_text( buf );
+      //snprintf( buf, 35, "[%d] %s", dataCols->size()-1, dcol->get_name().c_str() );
+      cboxtSeqnames.append_text( dcol->get_name().c_str() ); //buf );
    }
-   /*
-   if( equalize_full_length ) {
-      if( dcol->get_length() <= current_full_length )
-         dcol->set_
-   }
-   */
 }
+
+DataColorizer * MainWindow::removeCurrentColorizer( )
+{
+   int pos = cboxtSeqnames.get_active_row_number();
+   DataColorizer * dcol = (*dataCols)[ pos ];
+   dataCols->erase( dataCols->begin() + pos );
+   
+   if( dataCols->size() > 0 ) {
+      cboxtSeqnames.remove_text( cboxtSeqnames.get_active_text( ) );
+      cboxtSeqnames.set_active( 0 );
+   } else {
+      dataCols->push_back( new EmptyColorizer() );
+      cboxtSeqnames.clear_items( );
+      cboxtSeqnames.append_text( (*dataCols)[0]->get_name() );
+      cboxtSeqnames.set_active( 0 );
+   } 
+   
+   return dcol;
+}
+
 
 void MainWindow::on_btnZoomOut4x_clicked( void )
 {

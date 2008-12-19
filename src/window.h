@@ -16,6 +16,7 @@ class MainWindow : public Gtk::Window {
       bool fileButtons = false );
       
    void addColorizer( DataColorizer * dcol );
+   DataColorizer * removeCurrentColorizer( );
 
   protected:
    // Signal handlers:
