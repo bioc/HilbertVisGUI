@@ -19,7 +19,7 @@ class DataColorizer {
    virtual Glib::ustring get_name( ) const;
    virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const = 0;
    virtual long get_length( void ) const = 0;
-   // the next six fields form the pixmap cache
+   // the next seven fields form the pixmap cache
    Glib::RefPtr< Gdk::Pixmap > pixmap;
    std::vector< long > rev_map_lo;
    std::vector< long > rev_map_hi;

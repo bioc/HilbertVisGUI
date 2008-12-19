@@ -50,6 +50,8 @@ class MainWindowForStandalone : public MainWindow {
    vector< Gdk::Color > shared_palette_neg;
    vector<double> shared_palette_steps;
    Gdk::Color shared_na_color;
+   // Global full_length
+   long full_length;
 };
 
 class BidirColorizer : public SimpleDataColorizer {
@@ -59,6 +61,7 @@ class BidirColorizer : public SimpleDataColorizer {
       std::vector< Gdk::Color > * neg_palette_, Gdk::Color na_color_, 
       std::vector<double> * palette_steps_ );
    virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const;
+   void set_full_length( long full_length );
   protected:
    std::vector< Gdk::Color > * neg_palette;
 };
@@ -69,7 +72,8 @@ MainWindowForStandalone::MainWindowForStandalone(
     shared_palette_size( 256 ),
     shared_palette( shared_palette_size ),
     shared_palette_neg( shared_palette_size ),
-    shared_palette_steps( shared_palette_size-1 )
+    shared_palette_steps( shared_palette_size-1 ),
+    full_length( 0 )
 {
    #include "main_icon.c"
    set_default_icon( Gdk::Pixbuf::create_from_inline( -1, main_icon ) ); 
@@ -291,49 +295,60 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    }
    get_toplevel()->get_window()->set_cursor( );
       
-   bool valid_input = true;
-   long ans = -17;         
-   do{ 
-      Gtk::Dialog lendialog( "Enter length" );      
-      Gtk::Label lbllen( "\n"
-          "The length of the loaded sequence\n"
-          "is not provided by the file. Please\n"
-          "enter it manually. If you want to\n"
-          "use the maximum index found in the\n"
-          "file as length, just press 'Ok'.\n" ); 
-      Gtk::TextView tv;
-      char buf[50];
-      snprintf( buf, 50, "%ld", sv->max_index );
-      tv.get_buffer( )->set_text( buf );
-      lendialog.get_vbox()->add( lbllen );
-      lendialog.get_vbox()->add( tv );
-      lendialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-      lendialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
-      lendialog.show_all_children( );
-      if( lendialog.run( ) != Gtk::RESPONSE_OK )
-         return;
-      try{
-         ans = from_string<long int>( tv.get_buffer( )->get_text() );
-      } catch( conversion_failed_exception e ) {
-         valid_input = false;
-      }
-      if( ans <= 0 )
-         valid_input = false;
-      if( !valid_input ) {
-         Gtk::MessageDialog mdlg( "Please enter a positive integer number.", 
-            false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
-         mdlg.run();
-      }
-   } while( !valid_input );
-   long old_maxindex = sv->max_index;
-   sv->max_index = ans;
-   sv->set_value( old_maxindex, ans, 0 );
-     
+   #ifdef ASK_FOR_FULL_LENGTH
+      bool valid_input = true;
+      long ans = -17;         
+      do{ 
+         Gtk::Dialog lendialog( "Enter length" );      
+         Gtk::Label lbllen( "\n"
+             "The length of the loaded sequence\n"
+             "is not provided by the file. Please\n"
+             "enter it manually. If you want to\n"
+             "use the maximum index found in the\n"
+             "file as length, just press 'Ok'.\n" ); 
+         Gtk::TextView tv;
+         char buf[50];
+         snprintf( buf, 50, "%ld", sv->max_index );
+         tv.get_buffer( )->set_text( buf );
+         lendialog.get_vbox()->add( lbllen );
+         lendialog.get_vbox()->add( tv );
+         lendialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+         lendialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
+         lendialog.show_all_children( );
+         if( lendialog.run( ) != Gtk::RESPONSE_OK )
+            return;
+         try{
+            ans = from_string<long int>( tv.get_buffer( )->get_text() );
+         } catch( conversion_failed_exception e ) {
+            valid_input = false;
+         }
+         if( ans <= 0 )
+            valid_input = false;
+         if( !valid_input ) {
+            Gtk::MessageDialog mdlg( "Please enter a positive integer number.", 
+               false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+            mdlg.run();
+         }
+      } while( !valid_input );
+      long old_maxindex = sv->max_index;
+      sv->max_index = ans;
+      sv->set_value( old_maxindex, ans, 0 );
+   #endif
+
    addColorizer( new BidirColorizer( new StepDataVector( sv, abs_bin_max ), 
       Glib::filename_display_basename( dialog.get_filename( ) ) + ": " + seqname, 
       &shared_palette, &shared_palette_neg, shared_na_color, &shared_palette_steps ) );   
    cboxtSeqnames.set_active( dataCols->size()-1 );
-      
+
+   if( sv->max_index > full_length )
+   {
+      full_length = sv->max_index;
+      for( std::vector<DataColorizer*>::iterator i = dataCols->begin();
+            i != dataCols->end(); i++ ) 
+         if( dynamic_cast<BidirColorizer*>(*i) )
+            dynamic_cast<BidirColorizer*>(*i)->set_full_length( full_length );
+   }     
+     
 }
 
 void MainWindowForStandalone::on_btnClose_clicked( void )
@@ -569,6 +584,20 @@ Gdk::Color BidirColorizer::get_bin_color( long bin_start, long bin_size ) const
 
 }
 
+void BidirColorizer::set_full_length( long full_length )
+{
+   if( dynamic_cast<StepDataVector*>( get_data() ) ) {
+      if( dynamic_cast<StepDataVector*>( get_data() )->get_length() != full_length ) {
+         pixmap.clear();  
+         dynamic_cast<StepDataVector*>( get_data() )->set_full_length( full_length );
+      }
+   }
+   else {
+      std::cerr << "Warning: BidirColorizer::set_full_length used although data is not of\n";
+      std::cerr << "  class StepDataVector.\n";
+      // The whole full_length stuff should be moved from the data vector to the colorizer
+   }
+} 
 
 int main( int argc, char *argv[] )
 {
