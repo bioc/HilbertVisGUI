@@ -414,7 +414,7 @@ void MainWindowForStandalone::on_btnAbout_clicked( void )
 {
    Gtk::MessageDialog mdlg( 
       "<big><b>HilbertVis</b></big>\n"
-      "<i>version of " __DATE__ "</i>\n"
+      "<i>version " HILBERTVIS_VERSION ", built on " __DATE__ "</i>\n"
       "\n"
       "A tool to visualize extremely long data vectors.\n"
       "\n" 

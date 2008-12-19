@@ -6,9 +6,11 @@ LIBZ         = -lz
 
 RSRC=../src/
 
-CFLAGS = -O2 -iquote ${RSRC} -g
+CFLAGS = -O2 -iquote ${RSRC} -g -DHILBERTVIS_VERSION=\"$(HILBERTVIS_VERSION)\"
 
 CC = g++ ${CFLAGS} 
+
+HILBERTVIS_VERSION = `cat VERSION`
 
 all: hilbert conv2bwc
 
@@ -33,7 +35,7 @@ data_loading.o: data_loading.cc step_vector.h
 
 stand_alone_interface.o: stand_alone_interface.cc  \
    ${RSRC}/colorizers.h ${RSRC}/display.h ${RSRC}/ruler.h \
-   ${RSRC}/window.h data_loading.h step_vector.h main_icon.c
+   ${RSRC}/window.h data_loading.h step_vector.h main_icon.c VERSION
 	${CC} -c stand_alone_interface.cc ${GTKMM_CFLAGS}
 	
 %.o: ${RSRC}/%.cc
