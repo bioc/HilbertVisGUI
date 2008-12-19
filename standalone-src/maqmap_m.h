@@ -27,7 +27,7 @@ the value 128. */
 
 #include <string.h>
 #include <zlib.h>
-#include "const.h"
+#include "maq_const.h"
 
 /*
   name: read name
@@ -44,19 +44,19 @@ the value 128. */
  */
 template< int max_readlen > struct maqmap1_T
 {
-	bit8_t seq[max_readlen]; /* the last base is the single-end mapping quality. */
-	bit8_t size, map_qual, info1, info2, c[2], flag, alt_qual;
-	bit32_t seqid, pos;
-	int dist;
-	char name[MAX_NAMELEN];
+   bit8_t seq[max_readlen]; /* the last base is the single-end mapping quality. */
+   bit8_t size, map_qual, info1, info2, c[2], flag, alt_qual;
+   bit32_t seqid, pos;
+   int dist;
+   char name[MAX_NAMELEN];
 };
 
 template< int max_readlen > struct maqmap_T
 {
-	int format, n_ref;
-	char **ref_name;
-	bit64_t n_mapped_reads;
-	maqmap1_T< max_readlen > *mapped_reads;
+   int format, n_ref;
+   char **ref_name;
+   bit64_t n_mapped_reads;
+   maqmap1_T< max_readlen > *mapped_reads;
 };
 
 template< int max_readlen > 
@@ -66,47 +66,44 @@ inline int maqmap_read1( gzFile fp, maqmap1_T<max_readlen> * m1 ) {
 
 template< int max_readlen > maqmap_T<max_readlen> *maq_new_maqmap()
 {
-	maqmap_T<max_readlen> *mm = 
-	   (maqmap_T<max_readlen>*)calloc(1, sizeof(maqmap_T<max_readlen>));
-	mm->format = MAQMAP_FORMAT_NEW;
-	return mm;
+   maqmap_T<max_readlen> *mm = 
+      (maqmap_T<max_readlen>*)calloc(1, sizeof(maqmap_T<max_readlen>));
+   mm->format = MAQMAP_FORMAT_NEW;
+   return mm;
 }
 
 
 template< int max_readlen > void maq_delete_maqmap(maqmap_T<max_readlen> *mm)
 {
-	int i;
-	if (mm == 0) return;
-	for (i = 0; i < mm->n_ref; ++i)
-		free(mm->ref_name[i]);
-	free(mm->ref_name);
-	free(mm->mapped_reads);
-	free(mm);
+   int i;
+   if (mm == 0) return;
+   for (i = 0; i < mm->n_ref; ++i)
+      free(mm->ref_name[i]);
+   free(mm->ref_name);
+   free(mm->mapped_reads);
+   free(mm);
 }
 
 template< int max_readlen > maqmap_T<max_readlen> *maqmap_read_header(gzFile fp)
 {
-	maqmap_T<max_readlen> *mm;
-	int k, len;
-	mm = maq_new_maqmap<max_readlen>();
-	gzread(fp, &mm->format, sizeof(int));
-	if (mm->format != MAQMAP_FORMAT_NEW) {
-		if (mm->format > 0) {
-			maq_delete_maqmap(mm);
-			error("obsolete map format; use MAQ 'mapass2maq' command to convert");
-		}
-		assert(mm->format == MAQMAP_FORMAT_NEW);
-	}
-	gzread(fp, &mm->n_ref, sizeof(int));
-	mm->ref_name = (char**)calloc(mm->n_ref, sizeof(char*));
-	for (k = 0; k != mm->n_ref; ++k) {
-		gzread(fp, &len, sizeof(int));
-		mm->ref_name[k] = (char*)malloc(len * sizeof(char));
-		gzread(fp, mm->ref_name[k], len);
-	}
-	/* read number of mapped reads */
-	gzread(fp, &mm->n_mapped_reads, sizeof(bit64_t));
-	return mm;
+   maqmap_T<max_readlen> *mm;
+   int k, len;
+   mm = maq_new_maqmap<max_readlen>();
+   gzread(fp, &mm->format, sizeof(int));
+   if (mm->format != MAQMAP_FORMAT_NEW) {
+      maq_delete_maqmap(mm);
+      throw "This does not seem to be a Maq map file.";
+   }
+   gzread(fp, &mm->n_ref, sizeof(int));
+   mm->ref_name = (char**)calloc(mm->n_ref, sizeof(char*));
+   for (k = 0; k != mm->n_ref; ++k) {
+      gzread(fp, &len, sizeof(int));
+      mm->ref_name[k] = (char*)malloc(len * sizeof(char));
+      gzread(fp, mm->ref_name[k], len);
+   }
+   /* read number of mapped reads */
+   gzread(fp, &mm->n_mapped_reads, sizeof(bit64_t));
+   return mm;
 }
 
 

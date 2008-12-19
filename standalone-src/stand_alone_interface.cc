@@ -116,7 +116,7 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
       return;
    dialog.hide( );
    
-   enum {gff, wig, maq} filetype;
+   enum {gff, wig, maq, maq_old} filetype;
    
    if( regex_match_pp( ".gff", dialog.get_filename(), REG_ICASE ) )
       filetype = gff;
@@ -148,7 +148,7 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
       typedialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
       if( typedialog.run( ) != Gtk::RESPONSE_OK )
          return;
-	 
+         
       if( rbtnGff.get_active( ) )
          filetype = gff;
       else if( rbtnWig.get_active( ) )
@@ -157,16 +157,54 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
          filetype = maq;
       else abort(); 
       
-      typedialog.hide( );	 
+      typedialog.hide( );         
    }
    
+   if( filetype == maq ) {
+      Gtk::Dialog maqtypedialog( "Specify file type" );      
+      Gtk::Label lbl1( 
+         "\n"
+         "The binary format of Maq map files has changed\n"
+         "in Maq version 0.7 (released September 2008).\n"
+         "Unfortunately, the type of file cannot\n"
+         "be determined automatically.\n\n"
+         "Please indicate whether the file to be loaded\n"
+         "was created with an old version of Maq (before\n"
+         "version 0.7) or a new version (0.7 or later).\n" ); 
+      maqtypedialog.get_vbox()->add( lbl1 );  
+      maqtypedialog.show_all_children();       
+      
+      maqtypedialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+      maqtypedialog.add_button("Old Maq", Gtk::RESPONSE_YES);
+      maqtypedialog.add_button("New Maq", Gtk::RESPONSE_NO);
+      
+      int res = maqtypedialog.run( );
+      maqtypedialog.hide( );            
+      if( res != Gtk::RESPONSE_YES && res != Gtk::RESPONSE_NO )
+         return;
+
+      if( res == Gtk::RESPONSE_YES )
+         filetype = maq_old;
+   }
+
    get_toplevel()->get_window()->set_cursor( Gdk::Cursor(Gdk::WATCH) );
    set<string> toc;
-   switch( filetype ) {
-      case gff:  toc = get_gff_toc( dialog.get_filename( ) ); break;
-      case wig: ;
-      case maq: ;
-   };   
+   try{   
+      switch( filetype ) {
+         case gff:  toc = get_gff_toc( dialog.get_filename( ) ); break;
+         case wig:  break;
+         case maq:  toc = get_maqmap_toc( dialog.get_filename( ) ); break;
+         case maq_old:  toc = get_maqmap_old_toc( dialog.get_filename( ) ); break;
+      };   
+   } catch( data_loading_exception e ) {   
+      Gtk::MessageDialog mdlg( string( "The file " ) + 
+         Glib::filename_display_basename( dialog.get_filename( ) ) +
+         " could not be loaded due to the following error: " + e,
+         false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+      mdlg.run();
+      get_toplevel()->get_window()->set_cursor( );
+      return;
+   }
    get_toplevel()->get_window()->set_cursor( );
    
    Gtk::Dialog seqdialog( "Choose sequences" );      
@@ -191,29 +229,78 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    if( seqdialog.run( ) != Gtk::RESPONSE_OK )
       return;
    seqdialog.hide( );
+   
+   int min_qual = 0;
+   if( filetype == maq or filetype == maq_old ) {
+      Gtk::Dialog minqdialog( "Minimum alignment quality" );      
+      Gtk::Label lbl1( 
+         "\n"
+         "Do you want to disregard read below a certain\n"
+         "alignment quality threshold?\n\n"
+         "If so, indicate the minimum alignment quality\n"
+         "here. (Recommended threshold values are\n"
+         "10 or 15.)\n\n"
+         "A threshold of 0 means no filtering.\n\n" );
+         
+      Gtk::TextView tv;
+      char buf[50] = "0";
+      tv.get_buffer( )->set_text( buf );
+      minqdialog.get_vbox()->add( lbl1 );
+      minqdialog.get_vbox()->add( tv );
+      minqdialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+      minqdialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
+      minqdialog.show_all_children( );
+      bool valid_input = true;
+      do {
+         if( minqdialog.run( ) != Gtk::RESPONSE_OK )
+            return;
+         try{
+            min_qual = from_string<long int>( tv.get_buffer( )->get_text() );
+         } catch( conversion_failed_exception e ) {
+            valid_input = false;
+         }
+         if( min_qual < 0 )
+            valid_input = false;
+         if( !valid_input ) {
+            Gtk::MessageDialog mdlg( "Please enter a non-negative integer number.", 
+               false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+            mdlg.run();
+         }
+      } while( !valid_input );
+   }   
 
+   get_toplevel()->get_window()->set_cursor( Gdk::Cursor(Gdk::WATCH) );  
+   get_toplevel()->get_window()->set_cursor( Gdk::Cursor(Gdk::WATCH) );  
    step_vector<double> * sv;
    string seqname = lvt.get_text( lvt.get_selected()[0] );
    try{ 
-      sv = load_gff_data( dialog.get_filename( ), seqname );
-   } catch( ... ) {
+      switch( filetype ) {   
+         case gff:  sv = load_gff_data( dialog.get_filename( ), seqname ); break;
+         case wig:  Gtk::MessageDialog( "Loading of Wiggle or BED files is not yet implemented, sorry.", 
+               false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true ).run(); return;
+         case maq:  sv = load_maqmap_data( dialog.get_filename( ), seqname, min_qual ); break;
+         case maq_old:  sv = load_maqmap_old_data( dialog.get_filename( ), seqname, min_qual ); break;
+      }
+   } catch( data_loading_exception e ) {
       Gtk::MessageDialog mdlg( string( "The file " ) + 
          Glib::filename_display_basename( dialog.get_filename( ) ) +
-	 " could not be loaded.", false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+         " could not be loaded due to the following error: " + e,
+         false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, false );
       mdlg.run();
       return;
    }
-   
+   get_toplevel()->get_window()->set_cursor( );
+      
    bool valid_input = true;
-   long ans = -17;	 
+   long ans = -17;         
    do{ 
       Gtk::Dialog lendialog( "Enter length" );      
       Gtk::Label lbllen( "\n"
-	  "The length of the loaded sequence\n"
-	  "is not provided by the file. Please\n"
-	  "enter it manually. If you want to\n"
-	  "use the maximum index found in the\n"
-	  "file as length, just press 'Ok'.\n" ); 
+          "The length of the loaded sequence\n"
+          "is not provided by the file. Please\n"
+          "enter it manually. If you want to\n"
+          "use the maximum index found in the\n"
+          "file as length, just press 'Ok'.\n" ); 
       Gtk::TextView tv;
       char buf[50];
       snprintf( buf, 50, "%ld", sv->max_index );
@@ -223,8 +310,6 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
       lendialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
       lendialog.add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
       lendialog.show_all_children( );
-      //lendialog.run( );
-      lendialog.hide( );
       if( lendialog.run( ) != Gtk::RESPONSE_OK )
          return;
       try{
@@ -235,9 +320,9 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
       if( ans <= 0 )
          valid_input = false;
       if( !valid_input ) {
-	 Gtk::MessageDialog mdlg( "Please enter a positive integer number.", 
-	    false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
-	 mdlg.run();
+         Gtk::MessageDialog mdlg( "Please enter a positive integer number.", 
+            false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+         mdlg.run();
       }
    } while( !valid_input );
    long old_maxindex = sv->max_index;
@@ -290,10 +375,10 @@ void MainWindowForStandalone::on_btnSave_clicked( void )
       if( Glib::file_test( filename, Glib::FILE_TEST_EXISTS ) ) {
          Gtk::MessageDialog mdlg( string( "The file " ) + 
             Glib::filename_display_basename( dialog.get_filename( ) ) +
-	    " already exists.\nDo you want to overwrite it?", 
-  	    false, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_OK_CANCEL, true );
+            " already exists.\nDo you want to overwrite it?", 
+              false, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_OK_CANCEL, true );
          if( mdlg.run() != Gtk::RESPONSE_OK )
-	    return;
+            return;
       }
    }
 
@@ -338,7 +423,7 @@ void MainWindowForStandalone::on_btnAbout_clicked( void )
 
 void MainWindowForStandalone::on_btnQuit_clicked( void )
 {
-   Gtk::Main::quit();
+   hide();
 }
 
 void MainWindowForStandalone::brew_palettes( int palette_level )
@@ -408,11 +493,11 @@ double StepDataVector::get_bin_value( long bin_start, long bin_size ) const
          return v->get_min( bin_start, bin_start+bin_size-1 );
       case abs_bin_max: {
          pair<double,double> mm = v->get_minmax( bin_start, bin_start+bin_size-1 );
-	 return (-mm.first) > mm.second ? mm.first : mm.second;
+         return (-mm.first) > mm.second ? mm.first : mm.second;
       }
       case bin_avg: {
          cerr << "average binning not yet implemented\n";
-	 abort( );
+         abort( );
       }
       default:
          abort( );
@@ -436,7 +521,7 @@ pair< double, double > StepDataVector::get_range( void ) const
       if( (*v)[i] > max )
          max = (*v)[i];
    }
-   return pair<double,double>( min, max );	
+   return pair<double,double>( min, max );        
 }
 
 void StepDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
@@ -447,7 +532,7 @@ void StepDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
       int i;
       for( i = 0; i < 64; i++ )
          if( !( (unsigned) full_length >> i ) )
-	    break;
+            break;
       full_length = 1UL << i;
    }  
 }
