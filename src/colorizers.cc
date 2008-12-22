@@ -1,6 +1,6 @@
 #include "colorizers.h"
-#include <math.h>
-#include <assert.h>
+#include <cmath>
+#include <cassert>
 #include <sys/stat.h>
 #include <unistd.h>
 

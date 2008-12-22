@@ -25,7 +25,7 @@ the value 128. */
 #define PAIRFLAG_NOMATCH 0x40
 #define PAIRFLAG_SW      0x80
 
-#include <string.h>
+#include <cstring>
 #include <zlib.h>
 #include "maq_const.h"
 

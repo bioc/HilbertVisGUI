@@ -12,7 +12,7 @@ CC = g++ ${CFLAGS}
 
 HILBERTVIS_VERSION = `cat VERSION`
 
-all: hilbertvis conv2bwc
+all: hilbertvis #conv2bwc
 
 hilbertvis: stand_alone_interface.o  colorizers.o \
    display.o ruler.o window.o simple_regex_pp.o data_loading.o	
@@ -46,4 +46,4 @@ main_icon.c: main_icon.png
 	   || rm main_icon.c
 	
 clean:
-	rm -f *.o hilbert conv2bwc main_icon.c
+	rm -f *.o hilbertvis conv2bwc main_icon.c

@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <vector>
 #include <set>
 #include <iostream>

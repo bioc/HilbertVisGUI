@@ -1,8 +1,8 @@
 #ifndef HILBERT_DISPLAY_H
 #define HILBERT_DISPLAY_H
 
-#include <assert.h>
-#include <math.h>
+#include <cassert>
+#include <cmath>
 #include <vector>
 #include <gtkmm.h>
 #include <gtkmm/drawingarea.h>
