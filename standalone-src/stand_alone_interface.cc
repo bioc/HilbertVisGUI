@@ -7,7 +7,7 @@
 #include "display.h"
 #include "colorizers.h"
 #include "window.h"
-#include "simple_regex_pp.h"
+//#include "simple_regex_pp.h"
 #include "data_loading.h"
 
 using namespace std;
@@ -122,12 +122,13 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    
    enum {gff, wig, maq, maq_old} filetype;
    
-   if( regex_match_pp( ".gff", dialog.get_filename(), REG_ICASE ) )
+   Glib::ustring fn = dialog.get_filename();
+   Glib::ustring fn_last4 = fn.substr( fn.length()-4 ).lowercase();
+   if( fn_last4 == ".gff" )
       filetype = gff;
-   else if( regex_match_pp( ".bed", dialog.get_filename(), REG_ICASE ) 
-         || regex_match_pp( ".wig", dialog.get_filename(), REG_ICASE ) )
+   else if( fn_last4 == ".bed" || fn_last4 == ".wig" )
       filetype = wig;
-   else if( regex_match_pp( ".map", dialog.get_filename(), REG_ICASE ) )
+   else if( fn_last4 == ".map" )
       filetype = maq;
    else {
       Gtk::Dialog typedialog( "Specify file type" );      
@@ -210,6 +211,14 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
       return;
    }
    get_toplevel()->get_window()->set_cursor( );
+   
+   if( toc.size() == 0 ) {
+      Gtk::MessageDialog mdlg( string( "The file " ) + 
+         Glib::filename_display_basename( dialog.get_filename( ) ) +
+         " does not seem to contain any data sequences.",
+         false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true );
+      return;
+   }
    
    Gtk::Dialog seqdialog( "Choose sequences" );      
    Gtk::Label lblseq( Glib::ustring( "The following sequences are found in\n" ) +

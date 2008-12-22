@@ -15,9 +15,9 @@ HILBERTVIS_VERSION = `cat VERSION`
 all: hilbertvis #conv2bwc
 
 hilbertvis: stand_alone_interface.o  colorizers.o \
-   display.o ruler.o window.o simple_regex_pp.o data_loading.o	
+   display.o ruler.o window.o data_loading.o	
 	${CC} -o hilbertvis stand_alone_interface.o colorizers.o \
-	display.o ruler.o window.o simple_regex_pp.o data_loading.o \
+	display.o ruler.o window.o data_loading.o \
 	${LIBZ} ${GTKMM_LIBS}
 	
 conv2bwc: conv2bwc.o simple_regex_pp.o	
