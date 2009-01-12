@@ -3,6 +3,8 @@
 #include "data_loading.h"
 #include "maqmap_m.h"
 
+#include <glib.h>
+
 #include <iostream>
 
 void get_full_line( ifstream & infile, string & line )
@@ -51,6 +53,22 @@ inline pair< int, int > find_word( const string & line, int start_at = 0 )
    if( ! line[wend] )
       throw no_word_found_exception( );
    return pair<int,int>( wbeg, wend - wbeg );
+}
+
+bool starts_with( const string & s, const string & st )
+// checks whether s starts with st, ignoring leading whitespace and case
+{
+   int pos, pos2;
+   for( pos = 0; s[pos]; pos++ )
+      if( s[pos] != ' ' && s[pos] != '\t' )
+         break;
+   if( pos + st.length() >= s.length() )
+      return false;
+   for( pos2 = 0; s[pos] && st[pos2]; pos++, pos2++ )
+      if( tolower( s[pos] ) != tolower( st[pos2] ) ) {
+         return false;
+      }
+   return true;
 }
 
 template <class T> T from_string( const string & s )
@@ -217,5 +235,66 @@ step_vector<double> * load_maqmap_data( const string & filename, const string & 
 step_vector<double> * load_maqmap_old_data( const string & filename, const string & seqname, int minqual )
 {
    return load_maqmap_data_templ<MAX_READLEN_OLD>( filename, seqname, minqual );
+}
+
+enum wiggle_subformat { bed, fixedStep, variableStep };
+
+set<string> get_wiggle_toc( const string & filename )
+{
+   set< string > res;
+   ifstream infile( filename.c_str() );   
+   GRegex * re_trackname = g_regex_new( 
+      "name\\s*=\\s*(\"[^\"]*\"|\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   GRegex * re_chromname = g_regex_new( 
+      "chrom\\s*=\\s*(\"[^\"]*\"|\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   string trackname = "unnamed_track";
+   string chromname = "unnamed_chromosome";
+   wiggle_subformat wsf = bed;
+   while( infile ) {
+      string line;
+      get_full_line( infile, line );
+      if( line == "" )
+         break;
+      
+      if( starts_with( line, "#" ) )
+         continue;
+      if( starts_with( line, "browser" ) )
+         continue;
+      if( starts_with( line, "track" ) ) {
+         GMatchInfo * mi;
+         if( g_regex_match( re_trackname, line.c_str(), GRegexMatchFlags( 0 ), &mi ) )
+            trackname = g_match_info_fetch( mi, 1 );
+         else
+            trackname = "track_name_missing";
+         g_match_info_free( mi );
+         wsf = bed;
+         chromname = "unnamed_chromosome";
+         continue;
+      }
+      if( starts_with( line, "fixedStep" ) || starts_with( line, "variableStep" ) ) {
+         GMatchInfo * mi;
+         if( g_regex_match( re_chromname, line.c_str(), GRegexMatchFlags( 0 ), &mi ) )
+            chromname = g_match_info_fetch( mi, 1 );
+         else
+            chromname = "chromosome_name_missing";
+         g_match_info_free( mi );
+         res.insert( trackname + " / " + chromname );
+         if( starts_with( line, "fixedStep" ) )
+            wsf = fixedStep;
+         else 
+            wsf = variableStep;
+      }
+      if( wsf == bed) {
+         pair<int,int> pos = find_word( line );
+         string s = line.substr( pos.first, pos.second );
+         if( s != chromname ) {          
+            chromname = s;
+            res.insert( trackname + " / " + chromname );
+         }
+      }
+   }
+   infile.close();
+   g_regex_unref( re_trackname );
+   return res;
 }
 

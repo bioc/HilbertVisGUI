@@ -10,6 +10,7 @@ using namespace std;
 set< string > get_gff_toc( const string & filename );
 set< string > get_maqmap_toc( const string & filename );
 set< string > get_maqmap_old_toc( const string & filename );
+set< string > get_wiggle_toc( const string & filename );
 
 step_vector<double> * load_gff_data( const string & filename, const string & seqname );
 step_vector<double> * load_maqmap_data( const string & filename, const string & seqname, int minqual=0 );

@@ -197,7 +197,7 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    try{   
       switch( filetype ) {
          case gff:  toc = get_gff_toc( dialog.get_filename( ) ); break;
-         case wig:  break;
+         case wig:  toc = get_wiggle_toc( dialog.get_filename( ) ); break;
          case maq:  toc = get_maqmap_toc( dialog.get_filename( ) ); break;
          case maq_old:  toc = get_maqmap_old_toc( dialog.get_filename( ) ); break;
       };   

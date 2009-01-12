@@ -31,12 +31,12 @@ simple_regex_pp.o: simple_regex_pp.cc
 	${CC} -c $<
 
 data_loading.o: data_loading.cc step_vector.h
-	${CC} -c $<
+	${CC} -c $< ${GTKMM_CFLAGS}
 
 stand_alone_interface.o: stand_alone_interface.cc  \
    ${RSRC}/colorizers.h ${RSRC}/display.h ${RSRC}/ruler.h \
    ${RSRC}/window.h data_loading.h step_vector.h main_icon.c VERSION
-	${CC} -c stand_alone_interface.cc ${GTKMM_CFLAGS}
+	${CC} -c stand_alone_interface.cc ${GTKMM_CFLAGS} 
 	
 %.o: ${RSRC}/%.cc
 	${CC} -c -o $@ $< ${GTKMM_CFLAGS} 	
