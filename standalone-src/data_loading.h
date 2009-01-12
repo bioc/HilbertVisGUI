@@ -15,6 +15,7 @@ set< string > get_wiggle_toc( const string & filename );
 step_vector<double> * load_gff_data( const string & filename, const string & seqname );
 step_vector<double> * load_maqmap_data( const string & filename, const string & seqname, int minqual=0 );
 step_vector<double> * load_maqmap_old_data( const string & filename, const string & seqname, int minqual=0 );
+step_vector<double> * load_wiggle_data( const string & filename, const string & seqname );
 
 class data_loading_exception : public std::string {
   public:

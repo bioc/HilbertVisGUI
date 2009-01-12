@@ -285,12 +285,11 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    get_toplevel()->get_window()->set_cursor( Gdk::Cursor(Gdk::WATCH) );  
    get_toplevel()->get_window()->set_cursor( Gdk::Cursor(Gdk::WATCH) );  
    step_vector<double> * sv;
-   string seqname = lvt.get_text( lvt.get_selected()[0] );
+   string seqname = lvt.get_text( lvt.get_selected().size() >= 1 ? lvt.get_selected()[0] : 0 );
    try{ 
       switch( filetype ) {   
          case gff:  sv = load_gff_data( dialog.get_filename( ), seqname ); break;
-         case wig:  Gtk::MessageDialog( "Loading of Wiggle or BED files is not yet implemented, sorry.", 
-               false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true ).run(); return;
+         case wig:  sv = load_wiggle_data( dialog.get_filename( ), seqname ); break;
          case maq:  sv = load_maqmap_data( dialog.get_filename( ), seqname, min_qual ); break;
          case maq_old:  sv = load_maqmap_old_data( dialog.get_filename( ), seqname, min_qual ); break;
       }

@@ -47,11 +47,11 @@ inline pair< int, int > find_word( const string & line, int start_at = 0 )
    for( wbeg = start_at; line[wbeg]; wbeg++ )
       if( line[wbeg] != ' ' && line[wbeg] != '\t' )
          break;
+   if( ! line[wend] )
+      throw no_word_found_exception( );
    for( wend = wbeg; line[wend]; wend++ )
       if( line[wend] == ' ' || line[wend] == '\t' )
          break;
-   if( ! line[wend] )
-      throw no_word_found_exception( );
    return pair<int,int>( wbeg, wend - wbeg );
 }
 
@@ -278,7 +278,7 @@ set<string> get_wiggle_toc( const string & filename )
          else
             chromname = "chromosome_name_missing";
          g_match_info_free( mi );
-         res.insert( trackname + " / " + chromname );
+         res.insert( trackname + " // " + chromname );
          if( starts_with( line, "fixedStep" ) )
             wsf = fixedStep;
          else 
@@ -289,12 +289,158 @@ set<string> get_wiggle_toc( const string & filename )
          string s = line.substr( pos.first, pos.second );
          if( s != chromname ) {          
             chromname = s;
-            res.insert( trackname + " / " + chromname );
+            res.insert( trackname + " // " + chromname );
          }
       }
    }
    infile.close();
    g_regex_unref( re_trackname );
+   g_regex_unref( re_chromname );   
    return res;
+}
+
+step_vector<double> * load_wiggle_data( const string & filename, const string & seqname )
+{
+   step_vector<double> * sv = new step_vector<double>( numeric_limits<long int>::max() );
+   long int maxidx = numeric_limits<long int>::min();
+   ifstream infile( filename.c_str() );   
+
+   GRegex * re_trackname = g_regex_new( 
+      "name\\s*=\\s*(\"[^\"]*\"|\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   GRegex * re_chromname = g_regex_new( 
+      "chrom\\s*=\\s*(\"[^\"]*\"|\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   GRegex * re_span = g_regex_new( 
+      "span\\s*=\\s*(\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   GRegex * re_step = g_regex_new( 
+      "step\\s*=\\s*(\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   GRegex * re_start = g_regex_new( 
+      "start\\s*=\\s*(\\w*)", G_REGEX_CASELESS, GRegexMatchFlags( 0 ), NULL );
+   string trackname = "unnamed_track";
+   string chromname = "unnamed_chromosome";
+   wiggle_subformat wsf = bed;
+   long int begin, step_interval, span;
+   while( infile ) {
+      string line;
+      get_full_line( infile, line );
+      if( line == "" )
+         break;
+      
+      try {
+         if( starts_with( line, "#" ) )
+            continue;
+         if( starts_with( line, "browser" ) )
+            continue;
+         if( starts_with( line, "track" ) ) {
+            GMatchInfo * mi;
+            if( g_regex_match( re_trackname, line.c_str(), GRegexMatchFlags( 0 ), &mi ) )
+               trackname = g_match_info_fetch( mi, 1 );
+            else
+               trackname = "track_name_missing";
+            g_match_info_free( mi );
+            wsf = bed;
+            chromname = "unnamed_chromosome";
+            continue;
+         }
+         
+         if( starts_with( line, "fixedStep" ) || starts_with( line, "variableStep" ) ) {
+            GMatchInfo * mi;
+
+            if( g_regex_match( re_chromname, line.c_str(), GRegexMatchFlags( 0 ), &mi ) )
+               chromname = g_match_info_fetch( mi, 1 );
+            else
+               chromname = "chromosome_name_missing";
+            g_match_info_free( mi );
+            
+            if( g_regex_match( re_span, line.c_str(), GRegexMatchFlags( 0 ), &mi ) )
+               span = from_string< long int >( g_match_info_fetch( mi, 1 ) ); 
+            else
+               span = 1;
+            g_match_info_free( mi );
+
+            if( starts_with( line, "fixedStep" ) ) {
+               wsf = fixedStep;
+
+               if( g_regex_match( re_step, line.c_str(), GRegexMatchFlags( 0 ), &mi ) ) {
+                  step_interval = from_string< long int >( g_match_info_fetch( mi, 1 ) );
+                  begin -= step_interval;
+               } else
+                  throw data_loading_exception( "fixedStep track without 'step' argument." );
+               g_match_info_free( mi );
+
+               if( g_regex_match( re_start, line.c_str(), GRegexMatchFlags( 0 ), &mi ) )
+                  begin = from_string< long int >( g_match_info_fetch( mi, 1 ) ) - 1;
+               else
+                  throw data_loading_exception( "fixedStep track without 'start' argument." );
+               g_match_info_free( mi );
+               
+            } else 
+               wsf = variableStep;
+            continue;
+         }
+
+         pair<int,int> pos[5];
+         // Find first word
+         pos[0] = find_word( line );            
+
+         if( wsf == bed) {
+            chromname = line.substr( pos[0].first, pos[0].second );
+         }
+
+         if( trackname + " // " + chromname != seqname )
+            continue;
+            
+         // Find next words:
+         for( int i = 1; i < 5; i++ ) {
+            try {
+               pos[i] = find_word( line, pos[i-1].first + pos[i-1].second );
+            } catch( no_word_found_exception e ) {
+               pos[i] = pair<int,int>( 0, 0 );
+            }
+         }
+
+         long int end;
+         double score;
+         switch( wsf ) {
+            case bed:
+               begin  = from_string< long int >( line.substr( pos[1].first, pos[1].second ) );
+               end    = from_string< long int >( line.substr( pos[2].first, pos[2].second ) ) - 1;
+               try {
+                  score  = from_string< double   >( line.substr( pos[3].first, pos[3].second ) );
+               } catch( conversion_failed_exception e ) {
+                  score  = from_string< double   >( line.substr( pos[4].first, pos[4].second ) );
+                  // The BED format is ambiguous about whether the score is in the 4th or 5th column.
+               }
+               break;
+            case variableStep:
+               begin  = from_string< long int >( line.substr( pos[0].first, pos[0].second ) ) - 1;
+               cout << begin << endl;
+               end    = begin + span;
+               score  = from_string< double   >( line.substr( pos[1].first, pos[1].second ) );
+               cout << score << endl;
+               break;
+            case fixedStep:
+               score  = from_string< double   >( line.substr( pos[0].first, pos[0].second ) );
+               begin  += step_interval;
+               end    = begin + span;
+               break;
+         }
+
+         sv->add_value( begin, end, score );
+         if( end > maxidx )
+            maxidx = end;
+         
+      } catch( conversion_failed_exception e ) {
+         throw data_loading_exception( "Failed to parse a numerical value in the following line:\n" + line );
+      }
+   }
+   infile.close();
+   g_regex_unref( re_trackname );
+   g_regex_unref( re_chromname );
+   g_regex_unref( re_span );
+   g_regex_unref( re_step );
+   g_regex_unref( re_start );
+   
+   sv->max_index = maxidx;   
+   return sv;
 }
 
