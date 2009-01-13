@@ -203,7 +203,7 @@ void MainWindow::on_btnZoomOut4x_clicked( void )
    try{
       if( canvas.get_zoom_level() > 0)
          canvas.set_zoom( canvas.get_zoom_level() - 1, 
-	    canvas.get_zoom_offset() >> 2 );
+            canvas.get_zoom_offset() >> 2 );
       else
          error_bell( );
    } catch( HilbertValueError e ) {
@@ -312,18 +312,18 @@ void MainWindow::on_canvasClicked( GdkEventButton * ev, long binLo, long binHi )
    try{ 
       if( ev->type == GDK_BUTTON_PRESS && ev->button == 1 ) {
          if( rbtnZoomIn4x.get_active( ) ) {
-	    int quadrant = int( 4 * ( ( (binLo+binHi)/2/canvas.get_bin_size() - 
-	       canvas.get_begin() ) / canvas.get_num_pixels() ) );
+            int quadrant = int( 4 * ( ( (binLo+binHi)/2/canvas.get_bin_size() - 
+               canvas.get_begin() ) / canvas.get_num_pixels() ) );
             canvas.set_zoom( canvas.get_zoom_level() + 1, 
-	       ( canvas.get_zoom_offset() << 2 ) | quadrant );         
-	 } else if( rbtnZoomIn64x.get_active( ) ) {
-	    int tant = int( 64 * ( ( (binLo+binHi)/2/canvas.get_bin_size() - 
-	       canvas.get_begin() ) / canvas.get_num_pixels() ) );
+               ( canvas.get_zoom_offset() << 2 ) | quadrant );         
+         } else if( rbtnZoomIn64x.get_active( ) ) {
+            int tant = int( 64 * ( ( (binLo+binHi)/2/canvas.get_bin_size() - 
+               canvas.get_begin() ) / canvas.get_num_pixels() ) );
             canvas.set_zoom( canvas.get_zoom_level() + 3, 
-	       ( canvas.get_zoom_offset() << 6 ) | tant );         
-	 } else if( rbtnPlotLin.get_active( ) ) {
-	    // plot lin
-	 }
+               ( canvas.get_zoom_offset() << 6 ) | tant );         
+         } else if( rbtnPlotLin.get_active( ) ) {
+            // plot lin
+         }
       }
    } catch (HilbertValueError e) {
       error_bell();

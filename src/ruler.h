@@ -6,6 +6,7 @@
 #include "display.h"
 
 std::string int2strB( int a );
+std::string double2strB( double a );
 
 class Ruler : public Gtk::DrawingArea {
   public:

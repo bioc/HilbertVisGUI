@@ -19,6 +19,9 @@ class DataColorizer {
    virtual Glib::ustring get_name( ) const;
    virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const = 0;
    virtual long get_length( void ) const = 0;
+   
+   // The following fields are not used by DataColorizer itself but by
+   // MainWindow. (Some refactoring might be in order here.)
    // the next seven fields form the pixmap cache
    Glib::RefPtr< Gdk::Pixmap > pixmap;
    std::vector< long > rev_map_lo;
@@ -27,6 +30,7 @@ class DataColorizer {
    long zoom_offset;
    int pixel_size_level;  
    int palette_level; // this one only used by stand-alone version
+   std::vector< Gtk::Window * > linplot_wins; // this one only used by stand-alone version
 };
 
 

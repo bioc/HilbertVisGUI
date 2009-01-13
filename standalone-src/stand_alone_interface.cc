@@ -362,7 +362,14 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
 
 void MainWindowForStandalone::on_btnClose_clicked( void )
 {
-   removeCurrentColorizer();
+   DataColorizer * dcol = removeCurrentColorizer();
+
+   // Delete open linplot windows
+   for( std::vector<Gtk::Window*>::iterator w = dcol->linplot_wins.begin();
+      w != dcol->linplot_wins.end(); w++ )
+      delete *w;
+   
+   delete dcol;
 }
 
 void MainWindowForStandalone::on_btnSave_clicked( void )
@@ -456,8 +463,8 @@ void MainWindowForStandalone::on_canvasClicked( GdkEventButton * ev, long binLo,
             ( binLo + binHi ) / 2, 
             (int) round( ( canvas.get_adjPointerPos().get_upper() - canvas.get_adjPointerPos().get_lower() ) / 512 ),
             exp( ( (canvas.get_palette_level()+1) / 4 ) * log( 10 ) ) );
+         curcol->linplot_wins.push_back( lpw );
          lpw->show( );
-         // TODO: Memory hole here.
       } else
          error_bell();
    } else 

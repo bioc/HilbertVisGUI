@@ -18,7 +18,7 @@ bool LinPlot::on_expose_event( GdkEventExpose * event )
    gc->set_foreground( col );
    get_window()->draw_rectangle( gc, true, 0, 0, width-1, height-1 );   
    
-   col.set_grey_p( .2 );
+   col.set_grey_p( .4 );
    get_window()->get_colormap()->alloc_color( col );
    gc->set_foreground( col );
    long bin_size = round( (right-left) / width );
@@ -63,8 +63,9 @@ bool LinPlot::on_expose_event( GdkEventExpose * event )
 LinPlotWindow::LinPlotWindow( DataVector * dv, std::string name, long int middle, long int width, double scale )
  : lp( dv, name, middle - width/2, middle + width/2, scale )
 {
-  set_default_size( 280, 200 );
-  add( lp );
-  show_all_children( );
+   set_title( "Linear plot - HilbertVis" );
+   set_default_size( 280, 200 );
+   add( lp );
+   show_all_children( );
 }
 
