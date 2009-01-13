@@ -413,10 +413,8 @@ step_vector<double> * load_wiggle_data( const string & filename, const string & 
                break;
             case variableStep:
                begin  = from_string< long int >( line.substr( pos[0].first, pos[0].second ) ) - 1;
-               cout << begin << endl;
                end    = begin + span;
                score  = from_string< double   >( line.substr( pos[1].first, pos[1].second ) );
-               cout << score << endl;
                break;
             case fixedStep:
                score  = from_string< double   >( line.substr( pos[0].first, pos[0].second ) );

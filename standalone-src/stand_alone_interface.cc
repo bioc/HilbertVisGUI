@@ -7,8 +7,8 @@
 #include "display.h"
 #include "colorizers.h"
 #include "window.h"
-//#include "simple_regex_pp.h"
 #include "data_loading.h"
+#include "linplot.h"
 
 using namespace std;
 
@@ -27,7 +27,7 @@ class StepDataVector : public DataVector {
    virtual double get_bin_value( long bin_start, long bin_size ) const;
    virtual long get_length( void ) const;
    virtual pair< double, double > get_range( void ) const;
-   void set_full_length( long full_length_, bool round_up_to_pow2 = false );
+   void set_full_length( long full_length_, bool round_up_to_pow2 = false );   
 };
 
 class MainWindowForStandalone : public MainWindow {
@@ -42,6 +42,7 @@ class MainWindowForStandalone : public MainWindow {
    virtual void on_btnUp_clicked( void );
    virtual void on_btnAbout_clicked( void );
    virtual void on_btnQuit_clicked( void );
+   virtual void on_canvasClicked( GdkEventButton * ev, long binLo, long binHi );
    void brew_palettes( int palette_level );
    
    // Global palette information
@@ -78,7 +79,7 @@ MainWindowForStandalone::MainWindowForStandalone(
    #include "main_icon.c"
    set_default_icon( Gdk::Pixbuf::create_from_inline( -1, main_icon ) ); 
    brew_palettes( 4 );
-   rbtnPlotLin.set_sensitive( false );
+   //rbtnPlotLin.set_sensitive( false );
 }  
 
 
@@ -443,6 +444,26 @@ void MainWindowForStandalone::on_btnQuit_clicked( void )
 {
    hide();
 }
+
+void MainWindowForStandalone::on_canvasClicked( GdkEventButton * ev, long binLo, long binHi )
+{
+   if( ev->type == GDK_BUTTON_PRESS && ev->button == 1 && rbtnPlotLin.get_active( ) ) {
+
+      SimpleDataColorizer * curcol = dynamic_cast<SimpleDataColorizer*>( 
+         (*dataCols)[ cboxtSeqnames.get_active_row_number() ] );
+      if( curcol ) {         
+         LinPlotWindow * lpw = new LinPlotWindow( curcol->get_data(), curcol->get_name(),
+            ( binLo + binHi ) / 2, 
+            (int) round( ( canvas.get_adjPointerPos().get_upper() - canvas.get_adjPointerPos().get_lower() ) / 512 ),
+            exp( ( (canvas.get_palette_level()+1) / 4 ) * log( 10 ) ) );
+         lpw->show( );
+         // TODO: Memory hole here.
+      } else
+         error_bell();
+   } else 
+      MainWindow::on_canvasClicked( ev, binLo, binHi );
+}
+
 
 void MainWindowForStandalone::brew_palettes( int palette_level )
 {

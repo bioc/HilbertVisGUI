@@ -15,9 +15,9 @@ HILBERTVIS_VERSION = `cat VERSION`
 all: hilbertvis #conv2bwc
 
 hilbertvis: stand_alone_interface.o  colorizers.o \
-   display.o ruler.o window.o data_loading.o	
+   display.o ruler.o window.o data_loading.o linplot.o
 	${CC} -o hilbertvis stand_alone_interface.o colorizers.o \
-	display.o ruler.o window.o data_loading.o \
+	display.o ruler.o window.o data_loading.o linplot.o \
 	${LIBZ} ${GTKMM_LIBS}
 	
 conv2bwc: conv2bwc.o simple_regex_pp.o	
@@ -31,6 +31,9 @@ simple_regex_pp.o: simple_regex_pp.cc
 	${CC} -c $<
 
 data_loading.o: data_loading.cc step_vector.h
+	${CC} -c $< ${GTKMM_CFLAGS}
+
+linplot.o: linplot.cc step_vector.h ${RSRC}/display.h
 	${CC} -c $< ${GTKMM_CFLAGS}
 
 stand_alone_interface.o: stand_alone_interface.cc  \
