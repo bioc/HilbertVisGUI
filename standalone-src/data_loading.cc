@@ -47,7 +47,7 @@ inline pair< int, int > find_word( const string & line, int start_at = 0 )
    for( wbeg = start_at; line[wbeg]; wbeg++ )
       if( line[wbeg] != ' ' && line[wbeg] != '\t' )
          break;
-   if( ! line[wend] )
+   if( ! line[wbeg] )
       throw no_word_found_exception( );
    for( wend = wbeg; line[wend]; wend++ )
       if( line[wend] == ' ' || line[wend] == '\t' )
