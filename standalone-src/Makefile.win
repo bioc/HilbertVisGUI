@@ -1,0 +1,62 @@
+LIBZ_DIR     = "C:\Documents and Settings\Simon Anders\Desktop\zlib123"
+
+GTKMM_CFLAGS = `pkg-config gtkmm-2.4 --cflags`
+GTKMM_LIBS   = `pkg-config gtkmm-2.4 --libs`
+GLIB_CFLAGS  = `pkg-config glib-2.0 --cflags`
+GLIB_LIBS    = `pkg-config glib-2.0 --libs`
+LIBZ = $(LIBZ_DIR)/libz.a
+
+RSRC=../src/
+
+CFLAGS = -O2 -iquote ${RSRC} -g -DHILBERTVIS_VERSION=\"$(HILBERTVIS_VERSION)\" \
+   -I $(LIBZ_DIR)
+
+LINKER_FLAGS=-Wl,-subsystem,windows   
+
+CC = g++ ${CFLAGS} 
+
+HILBERTVIS_VERSION = `cat VERSION`
+
+all: hilbertvis #conv2bwc
+
+hilbertvis: stand_alone_interface.o  colorizers.o \
+   display.o ruler.o window.o data_loading.o linplot.o VERSION \
+   main_icon_for_mswin.o
+	${CC} -o hilbertvis stand_alone_interface.o colorizers.o \
+	display.o ruler.o window.o data_loading.o linplot.o \
+	${LIBZ} ${GTKMM_LIBS} \
+	$(LINKER_FLAGS) main_icon_for_mswin.o
+	
+main_icon_for_mswin.o: main_icon_for_mswin.rc main_icon.ico
+	windres main_icon_for_mswin.rc main_icon_for_mswin.o
+
+conv2bwc: conv2bwc.o simple_regex_pp.o	
+	${CC} -o conv2bwc conv2bwc.o simple_regex_pp.o \
+	${LIBZ} ${GLIB_LIBS}
+	
+conv2bwc.o: conv2bwc.cc simple_regex_pp.h
+	${CC} -c conv2bwc.cc ${GLIB_CFLAGS}
+
+simple_regex_pp.o: simple_regex_pp.cc
+	${CC} -c $<
+
+data_loading.o: data_loading.cc step_vector.h
+	${CC} -c $< ${GTKMM_CFLAGS}
+
+linplot.o: linplot.cc step_vector.h ${RSRC}/display.h
+	${CC} -c $< ${GTKMM_CFLAGS}
+
+stand_alone_interface.o: stand_alone_interface.cc  \
+   ${RSRC}/colorizers.h ${RSRC}/display.h ${RSRC}/ruler.h \
+   ${RSRC}/window.h data_loading.h step_vector.h main_icon.c VERSION
+	${CC} -c stand_alone_interface.cc ${GTKMM_CFLAGS} 
+	
+%.o: ${RSRC}/%.cc
+	${CC} -c -o $@ $< ${GTKMM_CFLAGS} 	
+
+main_icon.c: main_icon.png
+	gdk-pixbuf-csource main_icon.png --name main_icon --raw >main_icon.c \
+	   || rm main_icon.c
+	
+clean:
+	rm -f *.o hilbertvis conv2bwc main_icon.c
