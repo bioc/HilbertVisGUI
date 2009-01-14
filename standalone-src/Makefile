@@ -15,7 +15,7 @@ HILBERTVIS_VERSION = `cat VERSION`
 all: hilbertvis #conv2bwc
 
 hilbertvis: stand_alone_interface.o  colorizers.o \
-   display.o ruler.o window.o data_loading.o linplot.o
+   display.o ruler.o window.o data_loading.o linplot.o VERSION
 	${CC} -o hilbertvis stand_alone_interface.o colorizers.o \
 	display.o ruler.o window.o data_loading.o linplot.o \
 	${LIBZ} ${GTKMM_LIBS}
