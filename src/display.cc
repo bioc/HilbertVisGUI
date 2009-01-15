@@ -119,7 +119,8 @@ void HilbertCurveDisplay::on_realize( )
 
 bool HilbertCurveDisplay::on_expose_event( GdkEventExpose* event )
 {
-   assert( dataCol->pixmap );
+   if( ! dataCol->pixmap )
+      fill_pixmap();
    Glib::RefPtr< Gdk::GC > gc = Gdk::GC::create( get_window() );
    get_window()->draw_drawable( gc, dataCol->pixmap, 0, 0, 0, 0 );
    return true;   

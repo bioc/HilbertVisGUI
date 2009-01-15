@@ -166,3 +166,51 @@ long EmptyColorizer::get_length( void ) const
    return 1L << 18;
 }
 
+
+BidirColorizer::BidirColorizer( DataVector * data_, 
+      Glib::ustring name_, 
+      std::vector< Gdk::Color > * pos_palette_, 
+      std::vector< Gdk::Color > * neg_palette_, Gdk::Color na_color_, 
+      std::vector<double> * palette_steps_ )
+ : SimpleDataColorizer( data_, name_, pos_palette_, na_color_, 
+      palette_steps_ ),
+   neg_palette( neg_palette_ )   
+{
+}
+   
+Gdk::Color BidirColorizer::get_bin_color( long bin_start, long bin_size ) const
+{
+   double m;
+   try {
+      m = data->get_bin_value( bin_start, bin_size );
+   } catch( naValue e ) {
+      return na_color;
+   }
+   
+   unsigned i;
+   for( i = 0; i < palette_steps->size(); i++ )
+      if( (*palette_steps)[i] >= abs(m) )
+         break;
+
+   assert( (unsigned) i < palette->size() );
+      
+   return m >= 0 ? (*palette)[ i ] : (*neg_palette)[ i ];
+
+}
+
+/*
+void BidirColorizer::set_full_length( long full_length )
+{
+   if( dynamic_cast<StepDataVector*>( get_data() ) ) {
+      if( dynamic_cast<StepDataVector*>( get_data() )->get_length() != full_length ) {
+         pixmap.clear();  
+         dynamic_cast<StepDataVector*>( get_data() )->set_full_length( full_length );
+      }
+   }
+   else {
+      std::cerr << "Warning: BidirColorizer::set_full_length used although data is not of\n";
+      std::cerr << "  class StepDataVector.\n";
+      // The whole full_length stuff should be moved from the data vector to the colorizer
+   }
+} 
+*/

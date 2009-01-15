@@ -13,6 +13,13 @@ typedef struct {
 
 coord hilbert( long long t, int lv );
 
+/* A data colorizer is an adapter between the Hilbert display and the data.
+It represnts the full length of the sequence and can be queried for the 
+color of a bin (i.e., short section of the sequence that is represented by one 
+pixel in the Hilbert), which is specified in sequence coordinates.
+Most implementations of this abstract class do so by summarizing the relevant
+part of the data, but this is hidden to HilbertCurveDisplay. */
+
 class DataColorizer {
   public:
    virtual ~DataColorizer( );

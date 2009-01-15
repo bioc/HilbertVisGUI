@@ -55,18 +55,6 @@ class MainWindowForStandalone : public MainWindow {
    long full_length;
 };
 
-class BidirColorizer : public SimpleDataColorizer {
-  public:
-   BidirColorizer( DataVector * data_, Glib::ustring name_, 
-      std::vector< Gdk::Color > * pos_palette_, 
-      std::vector< Gdk::Color > * neg_palette_, Gdk::Color na_color_, 
-      std::vector<double> * palette_steps_ );
-   virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const;
-   void set_full_length( long full_length );
-  protected:
-   std::vector< Gdk::Color > * neg_palette;
-};
-
 MainWindowForStandalone::MainWindowForStandalone( 
      std::vector< DataColorizer * > * dataCols, bool portrait) 
   : MainWindow( dataCols, portrait, true ),
@@ -347,17 +335,28 @@ void MainWindowForStandalone::on_btnOpen_clicked( void )
    addColorizer( new BidirColorizer( new StepDataVector( sv, abs_bin_max ), 
       Glib::filename_display_basename( dialog.get_filename( ) ) + ": " + seqname, 
       &shared_palette, &shared_palette_neg, shared_na_color, &shared_palette_steps ) );   
-   cboxtSeqnames.set_active( dataCols->size()-1 );
 
+   // The following is a bit of a hack. As none of the data formats contains information
+   // on the sequence length, we just set the upper value of all the StepDataVectors
+   // to the common maximum of their maximum indices. This is not quite clean as it 
+   // modifies supposedly fixed data vectors.
    if( sv->max_index > full_length )
    {
       full_length = sv->max_index;
       for( std::vector<DataColorizer*>::iterator i = dataCols->begin();
-            i != dataCols->end(); i++ ) 
-         if( dynamic_cast<BidirColorizer*>(*i) )
-            dynamic_cast<BidirColorizer*>(*i)->set_full_length( full_length );
+            i != dataCols->end(); i++ ) {
+         SimpleDataColorizer * sdc = dynamic_cast<SimpleDataColorizer*>( *i );
+         if( sdc ) {
+            StepDataVector * sdv = dynamic_cast<StepDataVector*>( sdc->get_data() );
+            if( sdv ) {
+               sdc->pixmap.clear();  
+               sdv->set_full_length( full_length );
+            }
+         }
+      }
    }     
-     
+
+   cboxtSeqnames.set_active( dataCols->size()-1 );     
 }
 
 void MainWindowForStandalone::on_btnClose_clicked( void )
@@ -582,53 +581,6 @@ void StepDataVector::set_full_length( long full_length_, bool round_up_to_pow2 )
       full_length = 1UL << i;
    }  
 }
-
-
-BidirColorizer::BidirColorizer( DataVector * data_, 
-      Glib::ustring name_, 
-      std::vector< Gdk::Color > * pos_palette_, 
-      std::vector< Gdk::Color > * neg_palette_, Gdk::Color na_color_, 
-      std::vector<double> * palette_steps_ )
- : SimpleDataColorizer( data_, name_, pos_palette_, na_color_, 
-      palette_steps_ ),
-   neg_palette( neg_palette_ )   
-{
-}
-   
-Gdk::Color BidirColorizer::get_bin_color( long bin_start, long bin_size ) const
-{
-   double m;
-   try {
-      m = data->get_bin_value( bin_start, bin_size );
-   } catch( naValue e ) {
-      return na_color;
-   }
-   
-   unsigned i;
-   for( i = 0; i < palette_steps->size(); i++ )
-      if( (*palette_steps)[i] >= abs(m) )
-         break;
-
-   assert( (unsigned) i < palette->size() );
-      
-   return m >= 0 ? (*palette)[ i ] : (*neg_palette)[ i ];
-
-}
-
-void BidirColorizer::set_full_length( long full_length )
-{
-   if( dynamic_cast<StepDataVector*>( get_data() ) ) {
-      if( dynamic_cast<StepDataVector*>( get_data() )->get_length() != full_length ) {
-         pixmap.clear();  
-         dynamic_cast<StepDataVector*>( get_data() )->set_full_length( full_length );
-      }
-   }
-   else {
-      std::cerr << "Warning: BidirColorizer::set_full_length used although data is not of\n";
-      std::cerr << "  class StepDataVector.\n";
-      // The whole full_length stuff should be moved from the data vector to the colorizer
-   }
-} 
 
 int main( int argc, char *argv[] )
 {
