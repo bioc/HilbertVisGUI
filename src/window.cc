@@ -7,7 +7,7 @@
 #include "ruler.h"
 
 MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_, 
-      bool portrait, bool for_standalone )
+      bool portrait, bool file_buttons, bool palette_bar )
  : dataCols( dataCols_ ),
    canvas( (*dataCols_)[0] ),
    btnZoomOut4x( "Zoom out 4×" ),
@@ -23,7 +23,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    btnUp( "Lighter" ),
    btnAbout( "About" ),
    btnQuit( "Quit" ),
-   tbl1( for_standalone ? 2 : 1, 6, true ),
+   tbl1( file_buttons ? 2 : 1, 6, true ),
    frame1( "Bin under mouse cursor" ),
    frame2( "Full sequence" ),
    frame3( "Displayed part of sequence" ),
@@ -80,7 +80,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    tbl1.attach( btnPrev, 0, 1, 0, 1 );
    tbl1.attach( cboxtSeqnames, 1, 5, 0, 1 );
    tbl1.attach( btnNext, 5, 6, 0, 1 );
-   if( for_standalone ) {
+   if( file_buttons ) {
       tbl1.attach( btnOpen,  0, 1, 1, 2 );
       tbl1.attach( btnClose, 1, 2, 1, 2 );
       tbl1.attach( btnSave,  2, 3, 1, 2 );
@@ -89,7 +89,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    }
    frame7.add( tbl1 );
 
-   if( for_standalone ) {
+   if( palette_bar ) {
       tbl2.set_col_spacings( 10 );
       tbl2.attach( btnDown, 0, 1, 0, 1 );
       tbl2.attach( paletteBar, 1, 5, 0, 1 );
@@ -101,7 +101,7 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    vbox1.pack_start( frame7, Gtk::PACK_SHRINK );
    vbox1.pack_start( frame1, Gtk::PACK_SHRINK );
    vbox1.pack_start( hbox2, Gtk::PACK_SHRINK );
-   if( for_standalone ) 
+   if( palette_bar )
       vbox1.pack_start( frame8, Gtk::PACK_SHRINK );
    vbox1.pack_start( frame4, Gtk::PACK_SHRINK );
    vbox1.pack_start( hbox4, Gtk::PACK_SHRINK );

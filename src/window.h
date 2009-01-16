@@ -13,7 +13,7 @@ class MainWindow : public Gtk::Window {
   
   public:
    MainWindow( std::vector< DataColorizer * > * dataCols, bool portrait = true,
-      bool fileButtons = false );
+      bool file_buttons = false, bool palette_bar = false );
       
    void addColorizer( DataColorizer * dcol );
    DataColorizer * removeCurrentColorizer( );

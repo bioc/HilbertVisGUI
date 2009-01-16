@@ -36,7 +36,7 @@ class DataColorizer {
    int zoom_level;
    long zoom_offset;
    int pixel_size_level;  
-   int palette_level; // this one only used by stand-alone version
+   double palette_level; 
    std::vector< Gtk::Window * > linplot_wins; // this one only used by stand-alone version
 };
 
@@ -79,8 +79,8 @@ class HilbertCurveDisplay : public Gtk::DrawingArea {
    int get_zoom_level( void ) const;
    long get_zoom_offset( void ) const;
    void set_zoom( int zoom_level_, long zoom_offset_ );
-   int get_palette_level( void ) const;
-   void set_palette_level( int palette_level_ );
+   double get_palette_level( void ) const;
+   void set_palette_level( double palette_level_ );
    InvalidableAdjustment & get_adjDisplayedValueRange( void );
    InvalidableAdjustment & get_adjPointerPos( void );
    sigc::signal< void, GdkEventButton *, long, long > signal_mouse_clicked( void );

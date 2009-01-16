@@ -59,7 +59,8 @@ class RDataVector : public DataVector {
 class MainWindowForR : public MainWindow {
   public:
    MainWindowForR( std::vector< DataColorizer * > * dataCols, bool portrait,
-      SEXP plot_callback_, std::vector< Gdk::Color > * palette_, std::vector< double> * palette_steps_ );
+      SEXP plot_callback_, std::vector< Gdk::Color > * palette_, 
+      std::vector< double> * palette_steps_, bool palette_bar = false );
    ~MainWindowForR( );
   protected:
    SEXP plot_callback;
@@ -67,6 +68,21 @@ class MainWindowForR : public MainWindow {
    std::vector< double > * palette_steps;
    virtual void on_canvasClicked( GdkEventButton * ev, long binLo, long binHi );
    virtual void on_hide( void );
+};
+
+class MainWindowForRForBidir : public MainWindowForR {
+  public:
+   MainWindowForRForBidir( std::vector< DataColorizer * > * dataCols, bool portrait,
+      SEXP plot_callback_, std::vector< Gdk::Color > * palette_, std::vector< Gdk::Color > * palette_neg_,
+      std::vector< double > * palette_steps_, double max_palette_value_ );
+   ~MainWindowForRForBidir( );
+  protected:
+   std::vector< Gdk::Color > * palette_neg;   
+   std::vector< double > * palette_steps;
+   double max_palette_value;
+   virtual void on_btnUp_clicked( void );
+   virtual void on_btnDown_clicked( void );   
+   void set_palette_level( double palette_level );
 };
 
 template< class data_el_t >
@@ -99,7 +115,7 @@ double RDataVector<int>::get_bin_value( long bin_start, long bin_size ) const
          throw naValue();
       if( INTEGER(data)[i] > mx )
          mx = INTEGER(data)[i];
-   }	 
+   }         
    assert( mx > -INT_MAX );
    return mx;
 }
@@ -120,7 +136,7 @@ double RDataVector<double>::get_bin_value( long bin_start, long bin_size ) const
          throw naValue( );
       if( REAL(data)[i] > mx )
          mx = REAL(data)[i];
-   }	 
+   }         
    assert( mx > -INT_MAX );
    return mx;
 }
@@ -166,7 +182,7 @@ extern "C" void gtk_loop_iter( void * userData )
    DWORD WINAPI R_gtk_thread_proc( LPVOID lpParam ) 
    {
       while( true ) {
-	 PostMessage( (HWND)lpParam, RGTK2_ITERATE, 0, 0 );
+         PostMessage( (HWND)lpParam, RGTK2_ITERATE, 0, 0 );
          Sleep( 20 );
       }
       return 0;
@@ -208,22 +224,20 @@ for the shared object to be loaded by R.
 
 extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll) 
 {   
+
+   // Instatiate GTK (we do this twice, once to check whether it works
+   // and the for real
    #ifndef MSWINDOWS
-   
-   if( ! GDK_DISPLAY() ) {   
-      Rprintf( " | Cannot connect to an X display. Most functionality of \n"
+      if( ! gtk_init_check( &argc, &argv) ) {
+      Rprintf( "\n | Cannot connect to an X display. Most functionality of \n"
          " | HilbertVisGUI will be unavailable. Make sure that the DISPLAY\n"
-	 " | environment variable is set properly.\n" );
+         " | environment variable is set properly.\n\n" );
       Rf_warning( "Cannot connect to X display." );
       return;
-   }   
-   
+      }
    #endif
-
-
-   // Instatiate GTK (only if it ahs not yet been instantiated)
    the_kit = new Gtk::Main( argc, argv, true );
-	   
+           
    // Hook up into R's event loop
    #ifndef MSWINDOWS
 
@@ -253,8 +267,8 @@ extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll)
       HANDLE thread = CreateThread( NULL, 0, R_gtk_thread_proc, win, 0, NULL );
       SetThreadPriority( thread, THREAD_PRIORITY_IDLE );
             
-      #endif	    
-	    
+      #endif            
+            
    #endif   
 }
 
@@ -278,14 +292,14 @@ extern "C" void SYMBOL_CONCAT( R_unload_, SO_NAME ) (DllInfo * winDll)
    delete the_kit;
 }
 
-extern "C" SEXP R_display_hilbert( SEXP args) 
+extern "C" SEXP R_display_hilbert_old( SEXP args) 
 {
    if( ! Rf_isPairList( args ) )
       Rf_error( "R_display_hilbert: Must be called with .External." );
       
    #ifndef MSWINDOWS
       if( ! GDK_DISPLAY() ) 
-	 Rf_error( "R_display_hilbert: X display unavailable." );
+         Rf_error( "R_display_hilbert: X display unavailable." );
    #endif 
       
    SEXP arg = CDR( args );
@@ -317,7 +331,7 @@ extern "C" SEXP R_display_hilbert( SEXP args)
    for( unsigned i = 0; i < palette->size(); i++ )
       (*palette)[i].set_rgb_p( INTEGER(paletteR)[3*i] / 255., 
          INTEGER(paletteR)[3*i+1] / 255., INTEGER(paletteR)[3*i+2] / 255. );
-	 
+         
    std::vector< double > * palette_steps = new std::vector< double >( Rf_length( palette_stepsR ) );
    for( unsigned i = 0; i < palette_steps->size(); i++ )
       (*palette_steps)[i] = REAL(palette_stepsR)[i];
@@ -325,7 +339,7 @@ extern "C" SEXP R_display_hilbert( SEXP args)
    Gdk::Color na_color;
    na_color.set_rgb_p( INTEGER(naColorR)[0] / 255., 
          INTEGER(naColorR)[1] / 255., INTEGER(naColorR)[2] / 255. );
-	
+        
    std::vector< DataColorizer * > * dataCols = new std::vector< DataColorizer * >( );
    int i = 0;
    while( arg != R_NilValue ) {
@@ -333,22 +347,22 @@ extern "C" SEXP R_display_hilbert( SEXP args)
             || ( i >= Rf_length( seqnames ) ) ) {
          for( int j = 0; j < i; j++ )
             delete (*dataCols)[j];
-	 delete dataCols;
+         delete dataCols;
          char buf[300];
          snprintf( buf, 300, i < Rf_length( seqnames ) ? 
-	    "R_display_hilbert: Data vector #%d is not a vector of integers." :
-	    "R_display_hilbert: Data vector #%d does not have a name in second argument.", i+1 );
+            "R_display_hilbert_old: Data vector #%d is not a vector of integers." :
+            "R_display_hilbert_old: Data vector #%d does not have a name in second argument.", i+1 );
          Rf_error( buf );
       }
       Glib::ustring name = CHAR(STRING_ELT( seqnames, i ));
       long fl = ( ( full_lengths != R_NilValue ) && ( i < Rf_length(full_lengths) ) && 
-	    ( INTEGER(full_lengths)[i] != R_NaInt ) ) ? 
-	    INTEGER(full_lengths)[i] : Rf_length( CAR(arg) );
+            ( INTEGER(full_lengths)[i] != R_NaInt ) ) ? 
+            INTEGER(full_lengths)[i] : Rf_length( CAR(arg) );
       DataVector * datavec;
       binning_mode bmode = maximum;
-      if( Rf_isInteger( CAR(arg) ) ) 	    
+      if( Rf_isInteger( CAR(arg) ) )             
          datavec = new RDataVector<int>( CAR(arg), fl, bmode );
-      else  	     
+      else               
          datavec = new RDataVector<double>( CAR(arg), fl, bmode );
       dataCols->push_back( new SimpleDataColorizer( datavec, name, palette, 
          na_color, palette_steps ) );
@@ -374,7 +388,7 @@ extern "C" SEXP R_display_hilbert_3channel( SEXP dataRed, SEXP dataGreen, SEXP d
    Gdk::Color na_color;
    na_color.set_rgb_p( INTEGER(naColorR)[0] / 255., 
          INTEGER(naColorR)[1] / 255., INTEGER(naColorR)[2] / 255. );
-	
+        
    std::vector< DataColorizer * > * dataCols = new std::vector< DataColorizer * >( );
    dataCols->push_back( new ThreeChannelColorizer( 
       new RDataVector<double>( dataRed,   INTEGER(fullLength)[0], maximum ),
@@ -391,16 +405,118 @@ extern "C" SEXP R_display_hilbert_3channel( SEXP dataRed, SEXP dataGreen, SEXP d
    return R_NilValue;
 }
 
+extern "C" SEXP R_display_hilbert( SEXP args) 
+{
+   if( ! Rf_isPairList( args ) )
+      Rf_error( "R_display_hilbert: Must be called with .External." );
+      
+   #ifndef MSWINDOWS
+      if( ! GDK_DISPLAY() ) 
+         Rf_error( "R_display_hilbert: X display unavailable." );
+   #endif 
+      
+   SEXP arg = CDR( args );
+   SEXP plot_callback = CAR( arg ); arg = CDR( arg );
+   if( !( Rf_isNull(plot_callback) || Rf_isFunction(plot_callback) ) )
+      Rf_error( "R_display_hilbert: Argument 'plot_callback' must be a callback function or NULL." );
+   SEXP seqnames = CAR( arg ); arg = CDR( arg );
+   if( !( Rf_isString(seqnames) ) )
+      Rf_error( "R_display_hilbert: Argument 'seqnames' must be a vector of strings." );   
+   SEXP paletteR = CAR( arg ); arg = CDR( arg );
+   if( !( Rf_isInteger(paletteR) && ( Rf_length(paletteR) % 3 == 0 ) ) )
+      Rf_error( "R_display_hilbert: Argument 'paletteR' must be a 3-row matrix of integers." );   
+   SEXP palette_negR = CAR( arg ); arg = CDR( arg );
+   if( !( Rf_isInteger(palette_negR) && ( Rf_length(palette_negR) % 3 == 0 ) ) )
+      Rf_error( "R_display_hilbert: Argument 'palette_negR' must be a 3-row matrix of integers." );   
+   SEXP naColorR = CAR( arg ); arg = CDR( arg );
+   if( !( Rf_isInteger(paletteR) && ( Rf_length(naColorR) == 3 ) ) )
+      Rf_error( "R_display_hilbert: Argument 'naColorR' must be 3 integers." );   
+   SEXP max_palette_valueR = CAR( arg ); arg = CDR( arg );
+   if( !( Rf_isReal(max_palette_valueR) && ( Rf_length(max_palette_valueR) == 1 ) ) )
+      Rf_error( "R_display_hilbert: Argument 'max_palette_valueR' must be a scalar numeric value." );   
+   SEXP full_lengths = CAR( arg ); arg = CDR( arg );
+   if( !( (full_lengths == R_NilValue) || Rf_isInteger(full_lengths) ) )
+      Rf_error( "R_display_hilbert: Argument 'full_lengths' must be NULL or a vector of integers." );   
+   SEXP portrait = CAR( arg ); arg = CDR( arg );
+   if( !Rf_isLogical( portrait ) )
+      Rf_error( "R_display_hilbert: Argument 'portrait' must be a logical." );   
+
+
+   std::vector< Gdk::Color > * palette = new std::vector< Gdk::Color >( Rf_length(paletteR) / 3 );
+   for( unsigned i = 0; i < palette->size(); i++ )
+      (*palette)[i].set_rgb_p( INTEGER(paletteR)[3*i] / 255., 
+         INTEGER(paletteR)[3*i+1] / 255., INTEGER(paletteR)[3*i+2] / 255. );
+
+   std::vector< Gdk::Color > * palette_neg = new std::vector< Gdk::Color >( Rf_length(palette_negR) / 3 );
+   for( unsigned i = 0; i < palette_neg->size(); i++ )
+      (*palette_neg)[i].set_rgb_p( INTEGER(palette_negR)[3*i] / 255., 
+         INTEGER(palette_negR)[3*i+1] / 255., INTEGER(palette_negR)[3*i+2] / 255. );
+         
+   Gdk::Color na_color;
+   na_color.set_rgb_p( INTEGER(naColorR)[0] / 255., 
+         INTEGER(naColorR)[1] / 255., INTEGER(naColorR)[2] / 255. );
+        
+   std::vector< double > * palette_steps = new std::vector< double >( palette->size() - 1 );
+   double palette_level = log( REAL( max_palette_valueR )[ 0 ] ) / log( 10. ) * 4;
+   for( int i = 0; i < palette_steps->size(); i++ )
+      (*palette_steps)[i] = REAL( max_palette_valueR )[ 0 ] / palette->size() * (i+1);
+   // The for loop above is copied from MainWindowForRForBidir::set_palette_level,
+   // which is bad; it should not appear twice
+
+        
+   std::vector< DataColorizer * > * dataCols = new std::vector< DataColorizer * >( );
+   int i = 0;
+   while( arg != R_NilValue ) {
+      if( !( Rf_isInteger( CAR(arg) ) || Rf_isReal( CAR(arg) ) ) 
+            || ( i >= Rf_length( seqnames ) ) ) {
+         for( int j = 0; j < i; j++ )
+            delete (*dataCols)[j];
+         delete dataCols;
+         char buf[300];
+         snprintf( buf, 300, i < Rf_length( seqnames ) ? 
+            "R_display_hilbert: Data vector #%d is not a vector of integers." :
+            "R_display_hilbert: Data vector #%d does not have a name in second argument.", i+1 );
+         Rf_error( buf );
+      }
+      Glib::ustring name = CHAR(STRING_ELT( seqnames, i ));
+      long fl = ( ( full_lengths != R_NilValue ) && ( i < Rf_length(full_lengths) ) && 
+            ( INTEGER(full_lengths)[i] != R_NaInt ) ) ? 
+            INTEGER(full_lengths)[i] : Rf_length( CAR(arg) );
+      DataVector * datavec;
+      binning_mode bmode = maximum;
+      if( Rf_isInteger( CAR(arg) ) )             
+         datavec = new RDataVector<int>( CAR(arg), fl, bmode );
+      else               
+         datavec = new RDataVector<double>( CAR(arg), fl, bmode );
+      dataCols->push_back( new BidirColorizer( datavec, name, palette, palette_neg,
+         na_color, palette_steps ) );
+      i++;
+      arg = CDR( arg );
+   }   
+   
+   MainWindowForRForBidir * window = new MainWindowForRForBidir( dataCols, LOGICAL(portrait)[0], plot_callback, 
+      palette, palette_neg, palette_steps, REAL( max_palette_valueR )[ 0 ] );
+      
+   window->show( );
+   window->raise( );
+
+   while( Gtk::Main::events_pending() )
+      Gtk::Main::iteration();   
+     
+   return R_NilValue;
+}
+
 
 
 MainWindowForR::MainWindowForR( std::vector< DataColorizer * > * dataCols, bool portrait,
-      SEXP plot_callback_, std::vector< Gdk::Color > * palette_, std::vector< double> * palette_steps_ )
- : MainWindow( dataCols, portrait )
+      SEXP plot_callback_, std::vector< Gdk::Color > * palette_, std::vector< double> * palette_steps_,
+      bool palette_bar )
+ : MainWindow( dataCols, portrait, false, palette_bar )
 {
    plot_callback = plot_callback_;
    palette = palette_;
-   palette_steps = palette_steps_;
-   all_open_windows.insert( this );
+   palette_steps = palette_steps_;   
+   all_open_windows.insert( this );   
 }
 
 MainWindowForR::~MainWindowForR( )
@@ -424,7 +540,7 @@ void MainWindowForR::on_canvasClicked( GdkEventButton * ev, long binLo, long bin
    if( ev->type == GDK_BUTTON_PRESS && ev->button == 1 && rbtnPlotLin.get_active( ) ) {
       if( ! Rf_isFunction( plot_callback ) ) {
          Gtk::MessageDialog( "You must supply an R callback function to use the 'linear plot' feature.", 
-	    false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true ).run( );
+            false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true ).run( );
          return;
       }
 
@@ -481,6 +597,43 @@ void MainWindowForR::on_canvasClicked( GdkEventButton * ev, long binLo, long bin
       MainWindow::on_canvasClicked( ev, binLo, binHi );
 }
 
+
+MainWindowForRForBidir::MainWindowForRForBidir( std::vector< DataColorizer * > * dataCols, 
+      bool portrait, SEXP plot_callback_, std::vector< Gdk::Color > * palette_, 
+      std::vector< Gdk::Color > * palette_neg_, std::vector< double > * palette_steps_, double max_palette_value_ )
+ : MainWindowForR( dataCols, portrait, plot_callback_, palette_, NULL, true ),
+   palette_neg( palette_neg_ ),
+   palette_steps( palette_steps_ ),
+   max_palette_value( max_palette_value_ )
+{
+   paletteBar.set_palettes( max_palette_value, palette, palette_neg );
+}
+
+MainWindowForRForBidir::~MainWindowForRForBidir( )
+{
+   delete palette_neg;
+}
+
+void MainWindowForRForBidir::on_btnDown_clicked( void )
+{
+   double palette_level = log( max_palette_value) / log( 10. ) * 4;
+   set_palette_level( palette_level - 1 );
+}
+
+void MainWindowForRForBidir::on_btnUp_clicked( void )
+{
+   double palette_level = log( max_palette_value) / log( 10. ) * 4;
+   set_palette_level( palette_level + 1 );
+}
+
+void MainWindowForRForBidir::set_palette_level( double palette_level )
+{
+   max_palette_value = exp( palette_level / 4. * log( 10. ) );
+   for( int i = 0; i < palette_steps->size(); i++ )
+      (*palette_steps)[i] = max_palette_value / palette->size() * (i+1);
+   paletteBar.set_palettes( max_palette_value, palette, palette_neg );
+   canvas.set_palette_level( palette_level );
+}
 
 extern "C" SEXP dotsapplyR( SEXP args ) {
    SEXP fun = CADR( args );

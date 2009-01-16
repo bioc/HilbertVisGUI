@@ -57,7 +57,7 @@ class MainWindowForStandalone : public MainWindow {
 
 MainWindowForStandalone::MainWindowForStandalone( 
      std::vector< DataColorizer * > * dataCols, bool portrait) 
-  : MainWindow( dataCols, portrait, true ),
+  : MainWindow( dataCols, portrait, true, true ),
     shared_palette_size( 256 ),
     shared_palette( shared_palette_size ),
     shared_palette_neg( shared_palette_size ),

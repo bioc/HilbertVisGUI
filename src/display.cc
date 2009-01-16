@@ -251,12 +251,12 @@ void HilbertCurveDisplay::set_pixel_size_level( int pixel_size_level_)
    queue_draw( );
 }
 
-int HilbertCurveDisplay::get_palette_level( void ) const
+double HilbertCurveDisplay::get_palette_level( void ) const
 {
    return palette_level;
 }   
 
-void HilbertCurveDisplay::set_palette_level( int palette_level_ )
+void HilbertCurveDisplay::set_palette_level( double palette_level_ )
 {
    palette_level = palette_level_;
    if( !get_window() || !is_visible() )
@@ -264,7 +264,6 @@ void HilbertCurveDisplay::set_palette_level( int palette_level_ )
    fill_pixmap( );
    queue_draw( );
 }
-
 
 int HilbertCurveDisplay::get_zoom_level( void ) const
 {
