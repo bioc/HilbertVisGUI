@@ -3,7 +3,7 @@
 #include <cassert>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <iostream> // for debugging only
 
 void fill_with_default_palette( std::vector< Gdk::Color > & palette )
 {
@@ -186,14 +186,14 @@ Gdk::Color BidirColorizer::get_bin_color( long bin_start, long bin_size ) const
    } catch( naValue e ) {
       return na_color;
    }
-   
+
    unsigned i;
-   for( i = 0; i < palette_steps->size(); i++ )
-      if( (*palette_steps)[i] >= abs(m) )
+   for( i = 0; i < palette_steps->size(); i++ ) 
+      if( (*palette_steps)[i] >= fabs(m) )
          break;
 
    assert( (unsigned) i < palette->size() );
-      
+
    return m >= 0 ? (*palette)[ i ] : (*neg_palette)[ i ];
 
 }
