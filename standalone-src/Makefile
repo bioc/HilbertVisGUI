@@ -8,7 +8,7 @@ RSRC=../src/
 
 CFLAGS = -O2 -iquote ${RSRC} -g -DHILBERTVIS_VERSION=\"$(HILBERTVIS_VERSION)\"
 
-CC = g++4 ${CFLAGS} 
+CC = g++ ${CFLAGS} 
 
 HILBERTVIS_VERSION = `cat VERSION`
 
