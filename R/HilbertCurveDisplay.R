@@ -66,7 +66,7 @@ hilbertDisplayThreeChannel <- function(
 hilbertDisplay <- function( 
       ..., 
       palettePos = colorRampPalette( c( "white", "red" ) )( 300 ),
-      paletteNeg = colorRampPalette( c( "white", "blue" ) )( 300 ),
+      paletteNeg = colorRampPalette( c( "white", "blue" ) )( length(palettePos) ),
       maxPaletteValue = NULL,
       naColor = "gray", 
       plotFunc = simpleLinPlot, 
@@ -80,15 +80,14 @@ hilbertDisplay <- function(
    if( numargs == 0)
       stop( "Supply at least one data vector." )
    stopifnot( is.function( plotFunc ) )
-   if( mode( palettePos ) == "character" )
-      palettePos <- col2rgb( palettePos )
-   if( mode( paletteNeg ) == "character" )
-      paletteNeg <- col2rgb( paletteNeg )
-   if( mode( naColor ) == "character" )
-      naColor <- col2rgb( naColor )
-   stopifnot( nrow( palettePos ) == 3 )
-   stopifnot( nrow( paletteNeg ) == 3 )
-   stopifnot( length( naColor ) == 3 )
+   stopifnot( is.character( palettePos ) )
+   stopifnot( is.character( paletteNeg ) )
+   stopifnot( is.character( naColor ) )
+   stopifnot( length( naColor ) == 1 )
+   stopifnot( length( palettePos ) == length( paletteNeg ) )
+   palettePos <- col2rgb( palettePos )
+   paletteNeg <- col2rgb( paletteNeg )
+   naColor <- col2rgb( naColor )
    if( is.null(names) )
       names <- sapply( substitute(list(...)), deparse )[-1]
    stopifnot( is.character( names ) )
@@ -107,14 +106,15 @@ hilbertDisplay <- function(
    if( ! is.null( fullLengths ) )
       fullLengths <- as.integer( fullLengths )
    if( is.null( maxPaletteValue ) ) {
-      maxPaletteValue <- median( unlist( dotsapply( function(x) max(abs(x)), ... ) ) )
+      maxPaletteValue <- median( unlist( dotsapply( function(x) max(abs(x),na.rm=TRUE), ... ) ), na.rm=TRUE )
       maxPaletteValue <- 10**( ceiling( log10( maxPaletteValue ) * 4 ) / 4 )
    }
    stopifnot( mode( maxPaletteValue ) == "numeric" & length( maxPaletteValue ) == 1 )
+   stopifnot( ! is.na( maxPaletteValue ) )
    
    names <- substr( names, 0, 40 )
       
-   .External( `R_display_hilbert`, plotFunc, 
+   .External( `R_display_hilbert`, function( data, info ) try( plotFunc( data, info ) ), 
       names, as.integer( palettePos ), as.integer( paletteNeg ), 
       as.integer( naColor ), maxPaletteValue, fullLengths, portrait, ... )   
       

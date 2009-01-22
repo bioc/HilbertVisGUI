@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include <string>
 #include "window.h"
 #include "display.h"
 #include "error_bell_kludge.h"
@@ -99,7 +100,9 @@ MainWindow::MainWindow( std::vector< DataColorizer * > * dataCols_,
    
    vbox1.set_spacing( 10 );
    vbox1.pack_start( frame7, Gtk::PACK_SHRINK );
-   vbox1.pack_start( frame1, Gtk::PACK_SHRINK );
+   tbl3.set_homogeneous( true );
+   tbl3.attach( frame1, 0, 5, 0, 1 );
+   vbox1.pack_start( tbl3, Gtk::PACK_SHRINK );
    vbox1.pack_start( hbox2, Gtk::PACK_SHRINK );
    if( palette_bar )
       vbox1.pack_start( frame8, Gtk::PACK_SHRINK );
@@ -266,6 +269,46 @@ void MainWindow::on_btnClose_clicked( void )
 
 void MainWindow::on_btnSave_clicked( void )
 {
+   Gtk::FileChooserDialog dialog("Save displayed image as PNG file",
+      Gtk::FILE_CHOOSER_ACTION_SAVE );
+   dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+   dialog.add_button(Gtk::Stock::SAVE, Gtk::RESPONSE_OK);
+   dialog.set_do_overwrite_confirmation();
+
+   Gtk::FileFilter filt1, filt2;
+
+   filt1.add_pattern("*.png");
+   filt1.set_name("Portable Networks Graphics (PNG) format");
+   dialog.add_filter( filt1 );
+
+   filt2.add_pattern("*");
+   filt2.set_name("All files");
+   dialog.add_filter( filt2 );
+   
+   int result = dialog.run();   
+   if( result != Gtk::RESPONSE_OK )
+      return;
+   dialog.hide( );
+
+   std::string filename = dialog.get_filename( );
+   if( filename.substr( filename.length()-4 ) != ".png" ) {
+      filename += ".png";
+      if( Glib::file_test( filename, Glib::FILE_TEST_EXISTS ) ) {
+         Gtk::MessageDialog mdlg( std::string( "The file " ) + 
+            Glib::filename_display_basename( dialog.get_filename( ) ) +
+            " already exists.\nDo you want to overwrite it?", 
+              false, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_OK_CANCEL, true );
+         if( mdlg.run() != Gtk::RESPONSE_OK )
+            return;
+      }
+   }
+
+   int width, height;
+   canvas.get_dataCol()->pixmap->get_size( width, height );
+   Glib::RefPtr<Gdk::Pixbuf> pb = Gdk::Pixbuf::create( 
+      canvas.get_dataCol()->pixmap->get_image( 0, 0, width, height ), 
+      0, 0, width, height );
+   pb->save( filename, "png" );
 }
 
 void MainWindow::on_btnDown_clicked( void )

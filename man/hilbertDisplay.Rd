@@ -12,7 +12,7 @@ by means of the Hilbert curve.
 hilbertDisplay( 
       ..., 
       palettePos = colorRampPalette( c( "white", "red" ) )( 300 ),
-      paletteNeg = colorRampPalette( c( "white", "blue" ) )( 300 ),
+      paletteNeg = colorRampPalette( c( "white", "blue" ) )( length(palettePos) ),
       maxPaletteValue = NULL,
       naColor = "gray", 
       plotFunc = simpleLinPlot, 
@@ -30,12 +30,11 @@ Care is taken within \code{hilbertDisplay} that these vectors do not get duplica
 so that you can pass very large vectors. }
 
 \item{palettePos}{The color palette used to visualize positive valued bins in the data. 
-This must be either be a character vector of valid color names, or an array with 
-3 rows and one column per color, with integers ranging from 0 to 255 for the
-RGB values, i.e. the format returned by \code{\link{col2rgb}}. If no palette is 
+This must be either be a character vector of valid color names. If no palette is 
 supplied, a ramp from white to red is used.}
 
-\item{paletteNeg}{The color palette for bins with negative values.}
+\item{paletteNeg}{The color palette for bins with negative values. Both palettes 
+must have the same number of colours.}
 
 \item{maxPaletteValue}{The absolute bin value that should correspond to the end of the 
 two palettes. (The beginning of the palettes always represents 0.) Within the graphical

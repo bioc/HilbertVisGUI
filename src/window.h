@@ -48,7 +48,7 @@ class MainWindow : public Gtk::Window {
    Gtk::HBox hbox1, hbox2, hbox3, hbox4, hbox5, hbox6, hbox7, hbox8;
    Gtk::VBox vbox1;
    Gtk::Box * box0;
-   Gtk::Table tbl1, tbl2;
+   Gtk::Table tbl1, tbl2, tbl3;
    Gtk::Frame frame1, frame2, frame3, frame4, frame5, frame6, frame7, frame8;
    Gtk::Label lblPos, lblValue;
    Ruler rulerPointerPos;

@@ -40,7 +40,7 @@
 #include "R_env_prot.h"
 
 
-enum binning_mode { maximum, average };
+enum binning_mode { maximum, minimum, absmax, average };
 
 template< class data_el_t> 
 class RDataVector : public DataVector {
@@ -83,6 +83,7 @@ class MainWindowForRForBidir : public MainWindowForR {
    virtual void on_btnUp_clicked( void );
    virtual void on_btnDown_clicked( void );   
    void set_palette_level( double palette_level );
+   Gtk::Frame frame0b;
 };
 
 template< class data_el_t >
@@ -99,46 +100,108 @@ RDataVector<data_el_t>::~RDataVector( ) {
    env_unprotect( data );
 }
    
-template<>   
+template<>
 double RDataVector<int>::get_bin_value( long bin_start, long bin_size ) const
 {
-   assert( bmode == maximum );
    assert( bin_size > 0);
+   if( bin_start >= Rf_length( data ) )
+      throw naValue( );
    long max_idx = bin_start + bin_size;
-   if( max_idx >= Rf_length( data ) )
-      throw naValue();
-   if( bin_start >= max_idx )
-      bin_start = max_idx - 1;
-   int mx = -INT_MAX;
+   if( max_idx > Rf_length( data ) )
+      max_idx = Rf_length( data );
+   //if( bin_start >= max_idx )  // What was this for?
+   //   bin_start = max_idx - 1;
+   bool first = true;
+   int val;
+   long count = 0;   
    for( long i = bin_start; i < max_idx; i++ ) {
-      if( INTEGER(data)[i] == R_NaInt)
-         throw naValue();
-      if( INTEGER(data)[i] > mx )
-         mx = INTEGER(data)[i];
+      if( R_IsNA( INTEGER(data)[i] ) )
+         continue;
+      if( first ) {
+         val = INTEGER(data)[i];
+	 first = false;
+	 count++;	 
+      } else {
+         switch( bmode ) {
+	    case maximum:
+	       if( INTEGER(data)[i] > val )
+	          val = INTEGER(data)[i];
+	       break;
+	    case minimum:
+	       if( INTEGER(data)[i] < val )
+	          val = INTEGER(data)[i];
+	       break;
+	    case absmax:
+	       if( abs(INTEGER(data)[i]) > abs(val) )
+	          val = INTEGER(data)[i];
+	       break;
+	    case average:
+	       val += INTEGER(data)[i];
+	       count++;
+	       break;
+	    default:
+	       Rprintf( "Internal error: Unknown binning mode %d.\n", bmode );
+	 }
+      }
    }         
-   assert( mx > -INT_MAX );
-   return mx;
+   if( first )
+      throw naValue( );
+   if( bmode != absmax )
+      return val;
+   else
+      return (double) val / count;
 }
+
 
 template<>
 double RDataVector<double>::get_bin_value( long bin_start, long bin_size ) const
 {
-   assert( bmode == maximum );
    assert( bin_size > 0);
-   long max_idx = bin_start + bin_size;
-   if( max_idx >= Rf_length( data ) )
+   if( bin_start >= Rf_length( data ) )
       throw naValue( );
-   if( bin_start >= max_idx )
-      bin_start = max_idx - 1;
-   double mx = R_NegInf;
+   long max_idx = bin_start + bin_size;
+   if( max_idx > Rf_length( data ) )
+      max_idx = Rf_length( data );
+   //if( bin_start >= max_idx )  // What was this for?
+   //   bin_start = max_idx - 1;
+   bool first = true;
+   double val;
+   long count = 0;
    for( long i = bin_start; i < max_idx; i++ ) {
       if( R_IsNA( REAL(data)[i] ) || R_IsNaN( REAL(data)[i] ) )
-         throw naValue( );
-      if( REAL(data)[i] > mx )
-         mx = REAL(data)[i];
+         continue;
+      if( first ) {
+         val = REAL(data)[i];
+	 first = false;
+	 count++;
+      } else {
+         switch( bmode ) {
+	    case maximum:
+	       if( REAL(data)[i] > val )
+	          val = REAL(data)[i];
+	       break;
+	    case minimum:
+	       if( REAL(data)[i] < val )
+	          val = REAL(data)[i];
+	       break;
+	    case absmax:
+	       if( fabs(REAL(data)[i]) > fabs(val) )
+	          val = REAL(data)[i];
+	       break;
+	    case average:
+	       val += REAL(data)[i];
+	       count++;
+	       break;
+	    default:
+	       Rprintf( "Internal error: Unknown binning mode %d.\n", bmode );
+	 }
+      }
    }         
-   assert( mx > -INT_MAX );
-   return mx;
+   if( first )
+      throw naValue( );
+   if( bmode == absmax )
+      val /= count;
+   return val;
 }
 
 template< class data_el_t >
@@ -483,7 +546,7 @@ extern "C" SEXP R_display_hilbert( SEXP args)
             ( INTEGER(full_lengths)[i] != R_NaInt ) ) ? 
             INTEGER(full_lengths)[i] : Rf_length( CAR(arg) );
       DataVector * datavec;
-      binning_mode bmode = maximum;
+      binning_mode bmode = absmax;
       if( Rf_isInteger( CAR(arg) ) )             
          datavec = new RDataVector<int>( CAR(arg), fl, bmode );
       else               
@@ -607,6 +670,13 @@ MainWindowForRForBidir::MainWindowForRForBidir( std::vector< DataColorizer * > *
    max_palette_value( max_palette_value_ )
 {
    paletteBar.set_palettes( max_palette_value, palette, palette_neg );
+
+   // Add a save button (this would fit better in the parent constructor)
+   frame0b.set_label(" ");
+   frame0b.add( btnSave );
+   tbl3.attach( frame0b, 5, 6, 0, 1 );
+   btnSave.show();
+   frame0b.show();
 }
 
 MainWindowForRForBidir::~MainWindowForRForBidir( )
