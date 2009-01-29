@@ -396,7 +396,11 @@ void MainWindowForStandalone::on_btnAbout_clicked( void )
       "This is free software, licensed with the\n"
       "GNU General Public License, version 3.\n"
       "<small>See http://www.gnu.org/licenses/gpl-3.0-standalone.html\n"
-      "for the text of the license</small>\n",
+      "for the text of the license</small>\n"
+      "\n"
+      "The development of this software was funded by the\n"
+      "European Union's Marie Curie Research and Training\n"
+      "Network \"Chromatin Plasticity\".\n",
       true, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true );
    mdlg.run();
 }
