@@ -208,22 +208,20 @@ for the shared object to be loaded by R.
 
 extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll) 
 {   
+
+   // Instatiate GTK (we do this twice, once to check whether it works
+   // and the for real
    #ifndef MSWINDOWS
-   
-   if( ! GDK_DISPLAY() ) {   
-      Rprintf( " | Cannot connect to an X display. Most functionality of \n"
+      if( ! gtk_init_check( &argc, &argv) ) {
+      Rprintf( "\n | Cannot connect to an X display. Most functionality of \n"
          " | HilbertVisGUI will be unavailable. Make sure that the DISPLAY\n"
-	 " | environment variable is set properly.\n" );
+         " | environment variable is set properly.\n\n" );
       Rf_warning( "Cannot connect to X display." );
       return;
-   }   
-   
+      }
    #endif
-
-
-   // Instatiate GTK (only if it ahs not yet been instantiated)
    the_kit = new Gtk::Main( argc, argv, true );
-	   
+           
    // Hook up into R's event loop
    #ifndef MSWINDOWS
 
