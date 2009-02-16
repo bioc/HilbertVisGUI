@@ -10,5 +10,5 @@ Suggests: lattice
 Description: An interactive tool to visualize long vectors of 
 	integer data by means of Hilbert curves
 License: GPL >=3
-URL: http://www.ebi.ac.uk/~anders
+URL: http://www.ebi.ac.uk/~anders/hilbert
 biocViews: Visualization
