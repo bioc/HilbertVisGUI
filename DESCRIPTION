@@ -8,7 +8,7 @@ Depends: R (>= 2.6.0), HilbertVis (>= 1.1.6)
 SystemRequirements: gtkmm-2.4
 Suggests: lattice
 Description: An interactive tool to visualize long vectors of 
-	integer data by means of Hilbert curves 
+	integer data by means of Hilbert curves
 License: GPL >=3
 URL: http://www.ebi.ac.uk/~anders/hilbert
 biocViews: Visualization
