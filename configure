@@ -36,6 +36,15 @@ fi
 echo -n "Checking for gtkmm-2.4... "
 if pkg-config gtkmm-2.4; then
    echo "found: version" `pkg-config --modversion gtkmm-2.4`
+   if (( ! pkg-config --atleast-version=2.12 gtkmm-2.4 )); then
+      cat <<-'EOT'
+
+| You need at least version 2.12 of the gtkmm-2.4 libraries. Please
+| update GTK+/gtkmm to a more recent version and then try again.
+
+EOT
+      exit 1
+   fi
 else
    echo "not found!"
    cat <<-'EOT'
