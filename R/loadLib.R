@@ -61,13 +61,6 @@ failedToLoadDLL <- function( ) {
                " | double-click onto the downloaded file",
                " | After the installer has finished, restart R and try again ",
                " | to load this package.",
-               " | ",
-               " | IMPORTANT NOTE: Due to a configuration problem with the automatic",
-               " | built machines, the Mac version of HilbertVisGUI is currently",
-               " | broken. Please give us a few days to resolve this and then try",
-               " | again. Please see this web page for status updates:",
-               " | http://www.ebi.ac.uk/huber-srv/hilbert/download_R_packages.html",
-               " |             [Note added 2009-March-23]",
                "" ), 
  
          stop( "Unknown value in .Platform$pkgType" ) ) 
