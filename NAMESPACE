@@ -1,7 +1,6 @@
 export( 
    simpleLinPlot, 
    hilbertDisplay,
-   hilbertDisplayOld, 
    hilbertDisplayThreeChannel,
    dotsapply )
 
