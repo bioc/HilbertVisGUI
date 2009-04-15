@@ -1,0 +1,16 @@
+citHeader("To cite package 'HilbertVisGUI' in publications use:")
+     
+citEntry(
+   entry = "Article",
+   title = "Visualisation of genomic data with the Hilbert curve",
+   author = personList(as.person("Simon Anders")),
+   year = "2009",
+   journal = "Bioinformatics",
+   doi = "10.1093/bioinformatics/btp152",
+   url = "http://dx.doi.org/10.1093/bioinformatics/btp152",
+
+   textVersion = paste( 
+      "Simon Anders: \"Visualisation of genomic data with ",
+      "the Hilbert curve\", Bioinformatics, 2009, advance ",
+      "access publication, doi:10.1093/bioinformatics/btp152",
+      sep="" ) )
