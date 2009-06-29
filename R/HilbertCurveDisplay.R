@@ -10,7 +10,7 @@ simpleLinPlot <- function( data, info ) {
 
 
 hilbertDisplayThreeChannel <- function( 
-      dataRed, dataGreen, dataBlue, 
+      dataRed, dataGreen=0, dataBlue=0, 
       naColor = col2rgb( "gray" ),
       fullLength = max( length(dataRed), length(dataGreen), length(dataBlue) ),
       portrait = FALSE )
@@ -68,7 +68,7 @@ hilbertDisplay <- function(
    stopifnot( ! is.na( maxPaletteValue ) )
    
    names <- substr( names, 0, 40 )
-      
+   
    .External( `R_display_hilbert`, function( data, info ) try( plotFunc( data, info ) ), 
       names, as.integer( palettePos ), as.integer( paletteNeg ), 
       as.integer( naColor ), maxPaletteValue, fullLengths, portrait, ... )   

@@ -3,27 +3,14 @@
 #include <set>
 #include <iostream>
 #include <string>
+#include <limits>
+#include <cmath>
 #include "display.h"
 #include "window.h"
 #include "colorizers.h"
 
-// For handling the event loop under MS Windows I have first used the kludge that 
-// Oleg Sklyar found for EBImage for now. Following Michael Lawrence's advice I have
-// changed this now to the same style that he used in RGtk2. 
-// I think this works corectly now but by defining the macro OLEGS_KLUDGE I can
-// switch back to the other implementation:
-//#define OLEGS_KLUDGE
-
 #ifdef MSWINDOWS
-  #ifdef OLEGS_KLUDGE
-     // The following is a kludge that I took over from Oleg's code in EBImage.
-     // It seems that the eventloop API is lacking in R for Windows and he
-     // uses this symbol instead to hook in, which, however, seems to be defined
-     // only if the RGUI application is used, not in command-line R!
-     extern  __declspec(dllimport) void (* R_tcldo) ();
-  #else
-     #include <windows.h>
-  #endif
+  #include <windows.h>
 #endif
 
 #define R_NO_REMAP
@@ -45,7 +32,7 @@ enum binning_mode { maximum, minimum, absmax, average };
 template< class data_el_t> 
 class RDataVector : public DataVector {
   public:
-   RDataVector( SEXP data_, long full_length_, binning_mode bmode_ );
+   RDataVector( SEXP data_, long full_length_, binning_mode bmode_, bool pad_with_zeros_=false );
    virtual ~RDataVector( );
    virtual double get_bin_value( long bin_start, long bin_size ) const;
    virtual long get_length( void ) const;
@@ -54,6 +41,18 @@ class RDataVector : public DataVector {
    SEXP data;
    long full_length;  
    binning_mode bmode; 
+   bool pad_with_zeros;
+};
+
+template< class data_el_t> 
+class RRleDataVector : public RDataVector<data_el_t> {
+  public:
+   RRleDataVector( SEXP data_, long full_length_, binning_mode bmode_, bool pad_with_zeros_=false );
+   virtual double get_bin_value( long bin_start, long bin_size ) const;
+  protected:
+   SEXP values, lengths;
+   inline data_el_t RRleDataVector<data_el_t>::get_interval_value( int ivIdx ) const;
+   mutable int i_start, pos_start;
 };
 
 class MainWindowForR : public MainWindow {
@@ -87,11 +86,12 @@ class MainWindowForRForBidir : public MainWindowForR {
 };
 
 template< class data_el_t >
-RDataVector<data_el_t>::RDataVector( SEXP data_, long full_length_, binning_mode bmode_ ) 
+RDataVector<data_el_t>::RDataVector( SEXP data_, long full_length_, binning_mode bmode_, bool pad_with_zeros_ ) 
 {
    data = data_;
    full_length = full_length_;
    bmode = bmode_;
+   pad_with_zeros = pad_with_zeros_;
    env_protect( data );
 }
 
@@ -104,8 +104,12 @@ template<>
 double RDataVector<int>::get_bin_value( long bin_start, long bin_size ) const
 {
    assert( bin_size > 0);
-   if( bin_start >= Rf_length( data ) )
-      throw naValue( );
+   if( bin_start >= Rf_length( data ) ) {
+      if( pad_with_zeros )
+         return 0;
+      else
+         throw naValue( ); 
+   }
    long max_idx = bin_start + bin_size;
    if( max_idx > Rf_length( data ) )
       max_idx = Rf_length( data );
@@ -144,8 +148,12 @@ double RDataVector<int>::get_bin_value( long bin_start, long bin_size ) const
 	 }
       }
    }         
-   if( first )
-      throw naValue( );
+   if( first ) {
+      if( pad_with_zeros )
+         return 0;
+      else
+         throw naValue( ); 
+   }
    if( bmode != absmax )
       return val;
    else
@@ -157,8 +165,12 @@ template<>
 double RDataVector<double>::get_bin_value( long bin_start, long bin_size ) const
 {
    assert( bin_size > 0);
-   if( bin_start >= Rf_length( data ) )
-      throw naValue( );
+   if( bin_start >= Rf_length( data ) ) {
+      if( pad_with_zeros )
+         return 0;
+      else
+         throw naValue( ); 
+   }
    long max_idx = bin_start + bin_size;
    if( max_idx > Rf_length( data ) )
       max_idx = Rf_length( data );
@@ -197,8 +209,12 @@ double RDataVector<double>::get_bin_value( long bin_start, long bin_size ) const
 	 }
       }
    }         
-   if( first )
-      throw naValue( );
+   if( first ) {
+      if( pad_with_zeros )
+         return 0;
+      else
+         throw naValue( ); 
+   }
    if( bmode == absmax )
       val /= count;
    return val;
@@ -216,6 +232,76 @@ SEXP RDataVector<data_el_t>::get_data( void ) const
    return data;
 }
 
+template< class data_el_t >
+RRleDataVector<data_el_t>::RRleDataVector<data_el_t>( SEXP data_, long full_length_, binning_mode bmode_,
+      bool pad_with_zeros_ ) 
+ : RDataVector<data_el_t>( data_, full_length_, bmode_, pad_with_zeros_ )
+{
+   values  = R_do_slot( this->data, Rf_install("values") );
+   lengths = R_do_slot( this->data, Rf_install("lengths") );
+   i_start = 0;
+   pos_start = 0;
+}
+
+template< class data_el_t>
+double RRleDataVector<data_el_t>::get_bin_value( long bin_start, long bin_size ) const
+{
+   if( pos_start + INTEGER(lengths)[i_start] >= bin_start ) {
+      i_start = 0;
+      pos_start = 0;
+   }
+   int pos = pos_start;
+   data_el_t mx = std::numeric_limits<data_el_t>::min();
+   data_el_t mn = std::numeric_limits<data_el_t>::max();
+   int i;
+   for( i = i_start; i < LENGTH(values); i++ ) {
+      if( pos + INTEGER(lengths)[i] >= bin_start ) {
+         if( get_interval_value( i ) > mx)
+            mx = get_interval_value( i );
+         if( get_interval_value( i ) < mn )
+            mn = get_interval_value( i );
+      } 
+      pos += INTEGER(lengths)[i];
+      if( pos > bin_start + bin_size )
+         break;
+   }
+   if( i >= LENGTH(values) ) {
+      if( this->pad_with_zeros )
+         return 0;
+      else
+         throw naValue( ); 
+   }
+   
+   i_start = i - 1;
+   pos_start = pos - INTEGER(lengths)[i] - INTEGER(lengths)[i-1];
+   switch( this->bmode ) {
+      case maximum:
+         return mx;
+      case minimum:
+         return mn;
+      case absmax:
+         return std::abs(mx) > std::abs(mn) ? mx : mn;
+      case average:
+         Rf_error( "Binning mode not yet supported!" );
+      default:
+	 Rprintf( "Internal error: Unknown binning mode %d.\n", this->bmode );
+         return 0;
+   }
+}
+
+template<>
+inline int RRleDataVector<int>::get_interval_value( int ivIdx ) const
+{
+   return INTEGER(values)[ivIdx];
+}
+
+template<>
+inline double RRleDataVector<double>::get_interval_value( int ivIdx ) const
+{
+   return REAL(values)[ivIdx];
+}
+
+
 extern "C" void gtk_loop_iter( void * userData )
 {
    while( Gtk::Main::events_pending() )
@@ -223,15 +309,6 @@ extern "C" void gtk_loop_iter( void * userData )
 }
 
 #ifdef MSWINDOWS
-
-   #ifdef OLEGS_KLUDGE
-   
-   extern "C" void gtk_loop_iter_no_args( void )
-   {
-      gtk_loop_iter( NULL );
-   }  
-   
-   #else
 
    // This code is taken from Michael Lawrence's RGtk2 package,
    // from file Rgtk.c. It starts a synchronized thread to run
@@ -260,8 +337,6 @@ extern "C" void gtk_loop_iter( void * userData )
       }
       return DefWindowProc(hwnd, message, wParam, lParam);
    }
-
-   #endif
 
 #endif
 
@@ -308,15 +383,6 @@ extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll)
 
    #else
    
-      #ifdef OLEGS_KLUDGE
-   
-      // This is taken from Oleg's code in EBImage. It hooks the event handler
-      // into the symbol defined above. Really a strange hack, I should check whether
-      // there is no better way.
-      R_tcldo = gtk_loop_iter_no_args;
-
-      #else   
-   
       // Taken from Michael's code as well:
 
       /* Create a dummy window for receiving messages */
@@ -329,8 +395,6 @@ extern "C" void SYMBOL_CONCAT( R_init_, SO_NAME ) (DllInfo * winDll)
       /* Create a thread that will post messages to our window on this thread */
       HANDLE thread = CreateThread( NULL, 0, R_gtk_thread_proc, win, 0, NULL );
       SetThreadPriority( thread, THREAD_PRIORITY_IDLE );
-            
-      #endif            
             
    #endif   
 }
@@ -355,95 +419,16 @@ extern "C" void SYMBOL_CONCAT( R_unload_, SO_NAME ) (DllInfo * winDll)
    delete the_kit;
 }
 
-extern "C" SEXP R_display_hilbert_old( SEXP args) 
+RDataVector<double> * create_normal_or_Rle_RDataVector( SEXP data, long full_length, binning_mode bmode )
 {
-   if( ! Rf_isPairList( args ) )
-      Rf_error( "R_display_hilbert: Must be called with .External." );
-      
-   #ifndef MSWINDOWS
-      if( ! GDK_DISPLAY() ) 
-         Rf_error( "R_display_hilbert: X display unavailable." );
-   #endif 
-      
-   SEXP arg = CDR( args );
-   SEXP plot_callback = CAR( arg ); arg = CDR( arg );
-   if( !( Rf_isNull(plot_callback) || Rf_isFunction(plot_callback) ) )
-      Rf_error( "R_display_hilbert: Argument 'plot_callback' must be a callback function or NULL." );
-   SEXP seqnames = CAR( arg ); arg = CDR( arg );
-   if( !( Rf_isString(seqnames) ) )
-      Rf_error( "R_display_hilbert: Argument 'seqnames' must be a vector of strings." );   
-   SEXP paletteR = CAR( arg ); arg = CDR( arg );
-   if( !( Rf_isInteger(paletteR) && ( Rf_length(paletteR) % 3 == 0 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'paletteR' must be a 3-row matrix of integers." );   
-   SEXP naColorR = CAR( arg ); arg = CDR( arg );
-   if( !( Rf_isInteger(paletteR) && ( Rf_length(naColorR) == 3 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'naColorR' must be 3 integers." );   
-   SEXP palette_stepsR = CAR( arg ); arg = CDR( arg );
-   if( !( Rf_isNumeric(palette_stepsR) && ( Rf_length(palette_stepsR) == Rf_length(paletteR) / 3 - 1 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'palette_stepsR' must be a numerical vector of length one"
-         " less than the number of colors." );  
-   SEXP full_lengths = CAR( arg ); arg = CDR( arg );
-   if( !( (full_lengths == R_NilValue) || Rf_isInteger(full_lengths) ) )
-      Rf_error( "R_display_hilbert: Argument 'full_lengths' must be NULL or a vector of integers." );   
-   SEXP portrait = CAR( arg ); arg = CDR( arg );
-   if( !Rf_isLogical( portrait ) )
-      Rf_error( "R_display_hilbert: Argument 'portrait' must be a logical." );   
-
-
-   std::vector< Gdk::Color > * palette = new std::vector< Gdk::Color >( Rf_nrows(paletteR) );
-   for( unsigned i = 0; i < palette->size(); i++ )
-      (*palette)[i].set_rgb_p( INTEGER(paletteR)[3*i] / 255., 
-         INTEGER(paletteR)[3*i+1] / 255., INTEGER(paletteR)[3*i+2] / 255. );
-         
-   std::vector< double > * palette_steps = new std::vector< double >( Rf_length( palette_stepsR ) );
-   for( unsigned i = 0; i < palette_steps->size(); i++ )
-      (*palette_steps)[i] = REAL(palette_stepsR)[i];
-
-   Gdk::Color na_color;
-   na_color.set_rgb_p( INTEGER(naColorR)[0] / 255., 
-         INTEGER(naColorR)[1] / 255., INTEGER(naColorR)[2] / 255. );
-        
-   std::vector< DataColorizer * > * dataCols = new std::vector< DataColorizer * >( );
-   int i = 0;
-   while( arg != R_NilValue ) {
-      if( !( Rf_isInteger( CAR(arg) ) || Rf_isReal( CAR(arg) ) ) 
-            || ( i >= Rf_length( seqnames ) ) ) {
-         for( int j = 0; j < i; j++ )
-            delete (*dataCols)[j];
-         delete dataCols;
-         char buf[300];
-         snprintf( buf, 300, i < Rf_length( seqnames ) ? 
-            "R_display_hilbert_old: Data vector #%d is not a vector of integers." :
-            "R_display_hilbert_old: Data vector #%d does not have a name in second argument.", i+1 );
-         Rf_error( buf );
-      }
-      Glib::ustring name = CHAR(STRING_ELT( seqnames, i ));
-      long fl = ( ( full_lengths != R_NilValue ) && ( i < Rf_length(full_lengths) ) && 
-            ( INTEGER(full_lengths)[i] != R_NaInt ) ) ? 
-            INTEGER(full_lengths)[i] : Rf_length( CAR(arg) );
-      DataVector * datavec;
-      binning_mode bmode = maximum;
-      if( Rf_isInteger( CAR(arg) ) )             
-         datavec = new RDataVector<int>( CAR(arg), fl, bmode );
-      else               
-         datavec = new RDataVector<double>( CAR(arg), fl, bmode );
-      dataCols->push_back( new SimpleDataColorizer( datavec, name, palette, 
-         na_color, palette_steps ) );
-      i++;
-      arg = CDR( arg );
-   }   
-   
-   MainWindowForR * window = new MainWindowForR( dataCols, LOGICAL(portrait)[0],plot_callback, 
-      palette, palette_steps );
-   window->show( );
-   window->raise( );
-
-   while( Gtk::Main::events_pending() )
-      Gtk::Main::iteration();   
-     
-   return R_NilValue;
+   if( Rf_isReal( data ) )
+      return new RDataVector<double>( data, full_length, bmode, true );
+   else if( Rf_isObject( data ) && Rf_inherits( data, "Rle" ) &&
+         Rf_isReal( R_do_slot( data, Rf_install("values") ) ) ) 
+      return new RRleDataVector<double>( data, full_length, bmode, true );
+   else 
+      Rf_error( "Illegal data vector (must be a numeric vector or a numeric Rle vector)." );
 }
-
 
 extern "C" SEXP R_display_hilbert_3channel( SEXP dataRed, SEXP dataGreen, SEXP dataBlue, 
       SEXP naColorR, SEXP fullLength, SEXP portrait) 
@@ -452,12 +437,13 @@ extern "C" SEXP R_display_hilbert_3channel( SEXP dataRed, SEXP dataGreen, SEXP d
    na_color.set_rgb_p( INTEGER(naColorR)[0] / 255., 
          INTEGER(naColorR)[1] / 255., INTEGER(naColorR)[2] / 255. );
         
+   DataColorizer * col = new ThreeChannelColorizer( 
+      create_normal_or_Rle_RDataVector( dataRed,   INTEGER(fullLength)[0], maximum ),
+      create_normal_or_Rle_RDataVector( dataGreen, INTEGER(fullLength)[0], maximum ),
+      create_normal_or_Rle_RDataVector( dataBlue,  INTEGER(fullLength)[0], maximum ),
+      "multi-channel data", na_color );
    std::vector< DataColorizer * > * dataCols = new std::vector< DataColorizer * >( );
-   dataCols->push_back( new ThreeChannelColorizer( 
-      new RDataVector<double>( dataRed,   INTEGER(fullLength)[0], maximum ),
-      new RDataVector<double>( dataGreen, INTEGER(fullLength)[0], maximum ),
-      new RDataVector<double>( dataBlue,  INTEGER(fullLength)[0], maximum ),
-      "multi-channel data", na_color ) );
+   dataCols->push_back( col );
    MainWindowForR * window = new MainWindowForR( dataCols, LOGICAL(portrait)[0], 
       R_NilValue, NULL, NULL );
    window->show( );
@@ -529,15 +515,16 @@ extern "C" SEXP R_display_hilbert( SEXP args)
         
    std::vector< DataColorizer * > * dataCols = new std::vector< DataColorizer * >( );
    int i = 0;
-   while( arg != R_NilValue ) {
-      if( !( Rf_isInteger( CAR(arg) ) || Rf_isReal( CAR(arg) ) ) 
+   while( arg != R_NilValue ) {      
+      if( !( Rf_isInteger( CAR(arg) ) || Rf_isReal( CAR(arg) ) ||
+            ( Rf_isObject( CAR(arg) ) && Rf_inherits( CAR(arg), "Rle" ) ) ) 
             || ( i >= Rf_length( seqnames ) ) ) {
          for( int j = 0; j < i; j++ )
             delete (*dataCols)[j];
          delete dataCols;
          char buf[300];
          snprintf( buf, 300, i < Rf_length( seqnames ) ? 
-            "R_display_hilbert: Data vector #%d is not a vector of integers." :
+            "R_display_hilbert: Data vector #%d is not a vector of integers or reals notan Rle object." :
             "R_display_hilbert: Data vector #%d does not have a name in second argument.", i+1 );
          Rf_error( buf );
       }
@@ -549,8 +536,21 @@ extern "C" SEXP R_display_hilbert( SEXP args)
       binning_mode bmode = absmax;
       if( Rf_isInteger( CAR(arg) ) )             
          datavec = new RDataVector<int>( CAR(arg), fl, bmode );
-      else               
+      else if( Rf_isReal( CAR(arg) ) )                            
          datavec = new RDataVector<double>( CAR(arg), fl, bmode );
+      else if( Rf_isObject( CAR(arg) ) && Rf_inherits( CAR(arg), "Rle" ) ) {
+         if( Rf_isInteger( R_do_slot( CAR(arg), Rf_install("values") ) ) )
+            datavec = new RRleDataVector<int>( CAR(arg), fl, bmode );
+         else if( Rf_isReal( R_do_slot( CAR(arg), Rf_install("values") ) ) )
+            datavec = new RRleDataVector<double>( CAR(arg), fl, bmode );
+         else {
+            for( int j = 0; j < i; j++ )
+               delete (*dataCols)[j];
+            delete dataCols;
+            Rf_error( "R_hilbert_display: Can only deal with Rle objects of type integer or real." );
+         }
+      } else
+         Rf_error( "R_hilbert_display: internal error: got confused about argument type" );
       dataCols->push_back( new BidirColorizer( datavec, name, palette, palette_neg,
          na_color, palette_steps ) );
       i++;

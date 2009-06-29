@@ -4,8 +4,10 @@
 \title{Hilbert curve visualization}
 
 \description{
-Display one or several long integer vectors in an inetractive fashion 
+Display one or several long integer vectors in an interactive fashion 
 by means of the Hilbert curve.
+
+See the vignette for a full explanation.
 }
 
 \usage{
@@ -25,9 +27,10 @@ hilbertDisplay(
 
 \arguments{
 
-\item{...}{The data vectors to be visualized. This may be integer or real vectors. 
+\item{...}{The data vectors to be visualized. This may be integer or real vectors, either
+as ordinary R vectors or as \code{Rle} vectors (as defined in the \code{IRanges} packages). 
 Care is taken within \code{hilbertDisplay} that these vectors do not get duplicated, 
-so that you can pass very large vectors. }
+so that you can pass very large vectors.  }
 
 \item{palettePos}{The color palette used to visualize positive valued bins in the data. 
 This must be either be a character vector of valid color names. If no palette is 

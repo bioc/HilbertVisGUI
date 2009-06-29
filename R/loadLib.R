@@ -1,7 +1,6 @@
 dll <- NULL
 
 `init_prot_env` <- NULL
-`R_display_hilbert_old` <- NULL
 `R_display_hilbert` <- NULL
 `dotsapplyR` <- NULL
 `R_display_hilbert_3channel` <- NULL
@@ -15,7 +14,6 @@ Hilbert.ProtEnv <- NULL
       failedToLoadDLL( )
       
    `init_prot_env` <<- dll$`init_prot_env`
-   `R_display_hilbert_old` <<- dll$`R_display_hilbert_old`
    `R_display_hilbert` <<- dll$`R_display_hilbert`
    `dotsapplyR` <<- dll$`dotsapplyR`
    `R_display_hilbert_3channel` <<- dll$`R_display_hilbert_3channel`
