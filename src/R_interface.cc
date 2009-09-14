@@ -51,7 +51,7 @@ class RRleDataVector : public RDataVector<data_el_t> {
    virtual double get_bin_value( long bin_start, long bin_size ) const;
   protected:
    SEXP values, lengths;
-   inline data_el_t RRleDataVector<data_el_t>::get_interval_value( int ivIdx ) const;
+   inline data_el_t get_interval_value( int ivIdx ) const;
    mutable int i_start, pos_start;
 };
 
@@ -233,7 +233,7 @@ SEXP RDataVector<data_el_t>::get_data( void ) const
 }
 
 template< class data_el_t >
-RRleDataVector<data_el_t>::RRleDataVector<data_el_t>( SEXP data_, long full_length_, binning_mode bmode_,
+RRleDataVector<data_el_t>::RRleDataVector( SEXP data_, long full_length_, binning_mode bmode_,
       bool pad_with_zeros_ ) 
  : RDataVector<data_el_t>( data_, full_length_, bmode_, pad_with_zeros_ )
 {
