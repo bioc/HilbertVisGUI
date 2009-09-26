@@ -103,7 +103,7 @@ beginning of the vector being displayed.}
 \value{Returns an invisible NULL.}
 
 \seealso{
-  \code{\link{simpleLinPlot}}, \code{\link[HilbertVis:hilbertDefaultPalette]{hilbertDefaultPalette}}
+  \code{\link{simpleLinPlot}}
 }
 \examples{
 random <- c( as.integer( runif(100000)*30 ) ) 
