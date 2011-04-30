@@ -14,9 +14,9 @@ class PyCallbackColorizer : public DataColorizer {
    virtual Gdk::Color get_bin_color( long bin_start, long bin_size ) const;
    virtual long get_length( void ) const;
   protected:
+   const Glib::ustring name;
    const void * pyfunc;
    long length;
-   const Glib::ustring name;
 };
 
 class MainWindowForPython : public MainWindow {
@@ -46,7 +46,7 @@ long PyCallbackColorizer::get_length( void ) const
 
 Gdk::Color PyCallbackColorizer::get_bin_color( long bin_start, long bin_size ) const
 {
-   color col = callback_handler_global( bin_start, bin_size, pyfunc );
+   color col = callback_handler_global( bin_start, bin_size, const_cast< void* >( pyfunc ) );
    Gdk::Color col2;
    col2.set_rgb_p( col.red/256., col.green/256., col.blue/256. );
    return col2;
