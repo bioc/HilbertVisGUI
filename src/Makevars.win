@@ -1,6 +1,6 @@
 export PKG_CONFIG_PATH:=$(PKG_CONFIG_PATH);$(GTKMM_BASEPATH)/lib/pkgconfig
-GTK_INC:=`pkg-config gtkmm-2.4 --cflags`
-GTK_LIB:=`pkg-config gtkmm-2.4 --libs`
+GTK_INC:=$(shell pkg-config gtkmm-2.4 --cflags| tr -d '\r')
+GTK_LIB:=$(shell pkg-config gtkmm-2.4 --libs| tr -d '\r')
 SO_NAME=HilbertVisGUI
 
 PKG_CFLAGS=$(GTK_INC) -DSO_NAME=$(SO_NAME) -DMSWINDOWS
