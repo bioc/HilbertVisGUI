@@ -21,7 +21,7 @@ coord hilbert( long long t, int lv )
          case 1: { return (coord) { c.x, c.y + ( 1l << (lv-1) ) }; }
          case 2: { return (coord) { c.x + ( 1l << (lv-1) ), c.y + ( 1l << (lv-1) ) }; }
          case 3: { return (coord) { (1l<<lv) - 1 - c.y, ( 1l << (lv-1) ) - 1 - c.x }; }
-         default: abort( );
+         default: ; // never reached
       }
    }
    return (coord) {-1,-1}; /* dummy statement, never reached */
