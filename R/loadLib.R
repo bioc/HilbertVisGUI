@@ -46,7 +46,8 @@ failedToLoadDLL <- function( ) {
    	      " | Simply start the installer, accept all the default settings,",
    	      " | then restart R and try again to load this package.",
 	      "" ),
-         mac.binary =  
+         mac.binary = ,
+         mac.binary.mavericks = 
             cat( sep="\n",
                "",
                " | To install gtkmm, simply download the automatic install found",
