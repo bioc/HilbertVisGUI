@@ -7,16 +7,8 @@
 # framework put the pkg-config files. If the build runs on Linux,
 # these directories will simply be ignored.
 
-all: $(SHLIB)
-
-$(SHLIB):
-	OLD_PATH=`printenv PATH`
-	echo "$OLD_PATH"
-	PATH=$(OLD_PATH):/Library/Frameworks/GTK+.framework/Resources/bin
-
-
-# OLD_PKG_CONFIG_PATH=`printenv PKG_CONFIG_PATH`
-# if test "x$(OLD_PKG_CONFIG_PATH)" != "x"; then export PKG_CONFIG_PATH=/Library/Frameworks/GTK+.framework/Versions/2.14.X11/Resources/lib/pkgconfig:$(OLD_PKG_CONFIG_PATH) ; fi
+export PATH:=$(PATH):/Library/Frameworks/GTK+.framework/Resources/bin
+export PKG_CONFIG_PATH:=/Library/Frameworks/GTK+.framework/Versions/2.14.X11/Resources/lib/pkgconfig:$(PKG_CONFIG_PATH)
 
 # The following lines set the compiler and linker flags 
 # with the help of pkg-config:
@@ -30,3 +22,4 @@ PKG_LIBS=$(GTK_LIB)
 # This is specific to HilbertVisGUI
 
 SO_NAME=HilbertVisGUI
+PKG_CFLAGS+=-DSO_NAME=$(SO_NAME)
