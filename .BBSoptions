@@ -1,2 +1,2 @@
-UnsupportedPlatforms: mac
+UnsupportedPlatforms: mac, win32
 ForceInstall: TRUE
