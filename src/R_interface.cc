@@ -282,7 +282,7 @@ double RRleDataVector<data_el_t>::get_bin_value( long bin_start, long bin_size )
       case absmax:
          return std::abs(mx) > std::abs(mn) ? mx : mn;
       case average:
-         Rf_error( "Binning mode not yet supported!" );
+         Rf_error( "%s", "Binning mode not yet supported!" );
       default:
 	 Rprintf( "Internal error: Unknown binning mode %d.\n", this->bmode );
          return 0;
@@ -427,7 +427,7 @@ RDataVector<double> * create_normal_or_Rle_RDataVector( SEXP data, long full_len
          Rf_isReal( R_do_slot( data, Rf_install("values") ) ) ) 
       return new RRleDataVector<double>( data, full_length, bmode, true );
    else 
-      Rf_error( "Illegal data vector (must be a numeric vector or a numeric Rle vector)." );
+      Rf_error( "%s", "Illegal data vector (must be a numeric vector or a numeric Rle vector)." );
 }
 
 extern "C" SEXP R_display_hilbert_3channel( SEXP dataRed, SEXP dataGreen, SEXP dataBlue, 
@@ -457,38 +457,38 @@ extern "C" SEXP R_display_hilbert_3channel( SEXP dataRed, SEXP dataGreen, SEXP d
 extern "C" SEXP R_display_hilbert( SEXP args) 
 {
    if( ! Rf_isPairList( args ) )
-      Rf_error( "R_display_hilbert: Must be called with .External." );
+      Rf_error( "%s", "R_display_hilbert: Must be called with .External." );
       
    #ifndef MSWINDOWS
       if( ! GDK_DISPLAY() ) 
-         Rf_error( "R_display_hilbert: X display unavailable." );
+         Rf_error( "%s", "R_display_hilbert: X display unavailable." );
    #endif 
       
    SEXP arg = CDR( args );
    SEXP plot_callback = CAR( arg ); arg = CDR( arg );
    if( !( Rf_isNull(plot_callback) || Rf_isFunction(plot_callback) ) )
-      Rf_error( "R_display_hilbert: Argument 'plot_callback' must be a callback function or NULL." );
+      Rf_error( "%s", "R_display_hilbert: Argument 'plot_callback' must be a callback function or NULL." );
    SEXP seqnames = CAR( arg ); arg = CDR( arg );
    if( !( Rf_isString(seqnames) ) )
-      Rf_error( "R_display_hilbert: Argument 'seqnames' must be a vector of strings." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'seqnames' must be a vector of strings." );   
    SEXP paletteR = CAR( arg ); arg = CDR( arg );
    if( !( Rf_isInteger(paletteR) && ( Rf_length(paletteR) % 3 == 0 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'paletteR' must be a 3-row matrix of integers." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'paletteR' must be a 3-row matrix of integers." );   
    SEXP palette_negR = CAR( arg ); arg = CDR( arg );
    if( !( Rf_isInteger(palette_negR) && ( Rf_length(palette_negR) % 3 == 0 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'palette_negR' must be a 3-row matrix of integers." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'palette_negR' must be a 3-row matrix of integers." );   
    SEXP naColorR = CAR( arg ); arg = CDR( arg );
    if( !( Rf_isInteger(paletteR) && ( Rf_length(naColorR) == 3 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'naColorR' must be 3 integers." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'naColorR' must be 3 integers." );   
    SEXP max_palette_valueR = CAR( arg ); arg = CDR( arg );
    if( !( Rf_isReal(max_palette_valueR) && ( Rf_length(max_palette_valueR) == 1 ) ) )
-      Rf_error( "R_display_hilbert: Argument 'max_palette_valueR' must be a scalar numeric value." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'max_palette_valueR' must be a scalar numeric value." );   
    SEXP full_lengths = CAR( arg ); arg = CDR( arg );
    if( !( (full_lengths == R_NilValue) || Rf_isInteger(full_lengths) ) )
-      Rf_error( "R_display_hilbert: Argument 'full_lengths' must be NULL or a vector of integers." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'full_lengths' must be NULL or a vector of integers." );   
    SEXP portrait = CAR( arg ); arg = CDR( arg );
    if( !Rf_isLogical( portrait ) )
-      Rf_error( "R_display_hilbert: Argument 'portrait' must be a logical." );   
+      Rf_error( "%s", "R_display_hilbert: Argument 'portrait' must be a logical." );   
 
 
    std::vector< Gdk::Color > * palette = new std::vector< Gdk::Color >( Rf_length(paletteR) / 3 );
@@ -526,7 +526,7 @@ extern "C" SEXP R_display_hilbert( SEXP args)
          snprintf( buf, 300, i < Rf_length( seqnames ) ? 
             "R_display_hilbert: Data vector #%d is not a vector of integers or reals notan Rle object." :
             "R_display_hilbert: Data vector #%d does not have a name in second argument.", i+1 );
-         Rf_error( buf );
+         Rf_error( "%s", buf );
       }
       Glib::ustring name = CHAR(STRING_ELT( seqnames, i ));
       long fl = ( ( full_lengths != R_NilValue ) && ( i < Rf_length(full_lengths) ) && 
@@ -547,10 +547,10 @@ extern "C" SEXP R_display_hilbert( SEXP args)
             for( int j = 0; j < i; j++ )
                delete (*dataCols)[j];
             delete dataCols;
-            Rf_error( "R_hilbert_display: Can only deal with Rle objects of type integer or real." );
+            Rf_error( "%s", "R_hilbert_display: Can only deal with Rle objects of type integer or real." );
          }
       } else
-         Rf_error( "R_hilbert_display: internal error: got confused about argument type" );
+         Rf_error( "%s", "R_hilbert_display: internal error: got confused about argument type" );
       dataCols->push_back( new BidirColorizer( datavec, name, palette, palette_neg,
          na_color, palette_steps ) );
       i++;
@@ -708,10 +708,10 @@ void MainWindowForRForBidir::set_palette_level( double palette_level )
 extern "C" SEXP dotsapplyR( SEXP args ) {
    SEXP fun = CADR( args );
    if( ! Rf_isFunction(fun) )
-      Rf_error( "dotsapply: First argument must be a function." );
+      Rf_error( "%s", "dotsapply: First argument must be a function." );
    SEXP env = CADDR( args );
    if( ! Rf_isEnvironment(env) )
-      Rf_error( "dotsapply: Second argument must be an environment." );
+      Rf_error( "%s", "dotsapply: Second argument must be an environment." );
    int num = 0;
    SEXP dots0 = CDR( CDR( CDR( args ) ) );
    for( SEXP dots = dots0; dots != R_NilValue; dots = CDR(dots) )
