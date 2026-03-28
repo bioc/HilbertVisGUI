@@ -24,8 +24,6 @@
   #include <R_ext/eventloop.h>
 #endif  
 
-#include "R_env_prot.h"
-
 
 enum binning_mode { maximum, minimum, absmax, average };
 
@@ -92,12 +90,12 @@ RDataVector<data_el_t>::RDataVector( SEXP data_, long full_length_, binning_mode
    full_length = full_length_;
    bmode = bmode_;
    pad_with_zeros = pad_with_zeros_;
-   env_protect( data );
+   R_PreserveObject( data );
 }
 
 template< class data_el_t >
 RDataVector<data_el_t>::~RDataVector( ) {
-   env_unprotect( data );
+   R_ReleaseObject( data );
 }
    
 template<>

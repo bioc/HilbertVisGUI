@@ -1,11 +1,8 @@
 dll <- NULL
 
-`init_prot_env` <- NULL
 `R_display_hilbert` <- NULL
 `dotsapplyR` <- NULL
 `R_display_hilbert_3channel` <- NULL
-
-Hilbert.ProtEnv <- NULL   
 
 .onLoad <- function( libname, pkgname ) {
    
@@ -13,12 +10,9 @@ Hilbert.ProtEnv <- NULL
    if( class(dll) == "try-error" )
       failedToLoadDLL( )
       
-   `init_prot_env` <<- dll$`init_prot_env`
    `R_display_hilbert` <<- dll$`R_display_hilbert`
    `dotsapplyR` <<- dll$`dotsapplyR`
    `R_display_hilbert_3channel` <<- dll$`R_display_hilbert_3channel`
-   
-   Hilbert.ProtEnv <<- .Call( `init_prot_env` )   
 }
 
 .onUnload <- function( libpath ) {
