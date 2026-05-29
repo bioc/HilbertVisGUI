@@ -12,3 +12,4 @@ Description: An interactive tool to visualize long vectors of
 License: GPL (>= 3)
 URL: http://www.ebi.ac.uk/~anders/hilbert
 biocViews: Visualization
+Config/Bioconductor/UnsupportedPlatforms: windows, macosx
